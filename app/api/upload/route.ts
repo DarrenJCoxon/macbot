@@ -1,101 +1,103 @@
+// app/api/upload/route.ts
 import { NextResponse } from 'next/server';
-import { storeDocuments } from '@/app/lib/embedding-utils';
-import { splitTextIntoChunks, createVectorDocuments } from '@/app/lib/document-utils';
-import path from 'path';
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+import { nanoid } from 'nanoid';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Mark this as Node.js runtime (not Edge) since we need to process files
-export const runtime = 'nodejs';
+// Import embedding generation function
+import { generateEmbeddings } from '@/app/lib/embeddings';
+import { insertVectors } from '@/app/lib/pinecone-client';
+import { FileChunk } from '@/app/types';
 
-export async function POST(request: Request) {
+// Set up uploads directory
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+export async function POST(req: Request) {
   try {
-    // Extract the FormData
-    const formData = await request.formData();
+    const formData = await req.formData();
+    const files = formData.getAll('files') as File[];
     
-    // Get the file
-    const file = formData.get('file') as File | null;
-    
-    if (!file) {
+    if (!files || files.length === 0) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'No files uploaded' },
         { status: 400 }
       );
     }
     
-    // Validate file type
-    const fileExt = path.extname(file.name).toLowerCase();
-    const allowedExtensions = ['.txt'];
+    const fileNames: string[] = [];
+    const processedFiles = [];
     
-    if (!allowedExtensions.includes(fileExt)) {
-      return NextResponse.json(
-        { error: `Unsupported file type: ${fileExt}. Please upload .txt files.` },
-        { status: 400 }
-      );
-    }
-    
-    // Get metadata
-    const metadataStr = formData.get('metadata') as string | null;
-    let metadata = {
-      title: 'Untitled Document',
-      source: 'User Upload',
-      type: 'notes',
-    };
-    
-    if (metadataStr) {
-      try {
-        metadata = {
-          ...metadata,
-          ...JSON.parse(metadataStr),
-        };
-      } catch (e) {
-        console.error('Error parsing metadata:', e);
+    for (const file of files) {
+      const fileId = nanoid();
+      const fileName = file.name;
+      fileNames.push(fileName);
+      
+      // Save file to disk (optional, for processing)
+      const filePath = join(uploadsDir, `${fileId}-${fileName}`);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      await writeFile(filePath, buffer);
+      
+      // Process file content
+      let fileContent = '';
+      
+      if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+        fileContent = buffer.toString('utf-8');
+      } else if (fileName.endsWith('.pdf')) {
+        // For PDF processing, you would need to add a PDF parsing library
+        // like pdf-parse
+        fileContent = "PDF processing would go here";
+      } else if (fileName.endsWith('.docx')) {
+        // For DOCX processing, you would need to add a DOCX parsing library
+        // like mammoth
+        fileContent = "DOCX processing would go here";
       }
+      
+      // Split content into chunks
+      const chunkSize = 1000;
+      const overlap = 200;
+      const fileChunks: FileChunk[] = [];
+      
+      for (let i = 0; i < fileContent.length; i += chunkSize - overlap) {
+        const chunkContent = fileContent.slice(i, i + chunkSize);
+        fileChunks.push({
+          id: `${fileId}-${fileChunks.length}`,
+          fileId,
+          content: chunkContent,
+          metadata: {
+            fileName,
+            chunkIndex: fileChunks.length,
+          },
+        });
+      }
+      
+      // Generate embeddings for each chunk
+      const vectors = await generateEmbeddings(fileChunks);
+      
+      // Store in Pinecone
+      await insertVectors(vectors);
+      
+      processedFiles.push({
+        id: fileId,
+        name: fileName,
+        chunks: fileChunks.length,
+      });
     }
-    
-    // Read the file content
-    const arrayBuffer = await file.arrayBuffer();
-    const text = new TextDecoder().decode(arrayBuffer);
-    
-    if (!text || text.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Empty file content' },
-        { status: 400 }
-      );
-    }
-    
-    // Split text into chunks
-    const chunks = splitTextIntoChunks(text);
-    
-    if (chunks.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid content found in file' },
-        { status: 400 }
-      );
-    }
-    
-    // Add file metadata
-    const enhancedMetadata = {
-      ...metadata,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type || fileExt,
-      uploadDate: new Date().toISOString(),
-    };
-    
-    // Create vector documents
-    const documents = createVectorDocuments(chunks, enhancedMetadata);
-    
-    // Store in vector database
-    await storeDocuments(documents);
     
     return NextResponse.json({
-      message: `Successfully processed and stored ${chunks.length} document chunks`,
-      documentTitle: metadata.title,
-      chunks: chunks.length,
+      success: true,
+      fileNames,
+      processedFiles,
     });
   } catch (error) {
-    console.error('Error processing document upload:', error);
+    console.error('Error processing file upload:', error);
     return NextResponse.json(
-      { error: 'Failed to process document', details: String(error) },
+      { error: 'Failed to process upload' },
       { status: 500 }
     );
   }

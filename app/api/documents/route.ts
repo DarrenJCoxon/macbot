@@ -1,62 +1,107 @@
+// app/api/documents/route.ts
 import { NextResponse } from 'next/server';
-import { index } from '@/app/lib/pinecone-client';
+import pineconeClient from '@/app/lib/pinecone-client';
+import { getIndex } from '@/app/lib/pinecone-client';
 
-// Mark as Node.js runtime since we're working with Pinecone
-export const runtime = 'nodejs';
-
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // Query for documents with metadata filtering
-    const result = await index.query({
-      vector: Array(768).fill(0), // Query with a zero vector matching the dimensions of m2-bert-80M-8k-retrieval
-      topK: 1000, // Get as many as possible
-      includeMetadata: true,
-      filter: {
-        chunkIndex: 0, // Only get the first chunk to avoid duplicates
-      },
+    // Get the URL params
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    
+    // Get Pinecone index
+    const index = await getIndex();
+    
+    // Fetch document metadata
+    const response = await index.fetch({ 
+      ids: [], 
+      limit 
     });
     
-    // Group documents by title to get unique entries
-    const documentMap = new Map();
+    // Extract document information from vectors
+    const documents = Object.entries(response.vectors || {}).map(([id, vector]) => ({
+      id,
+      fileName: vector.metadata?.fileName,
+      uploadedAt: vector.metadata?.uploadedAt,
+    }));
     
-    result.matches.forEach((match) => {
-      const metadata = match.metadata || {};
-      const title = metadata.title || 'Untitled';
-      
-      // Only add if not already in the map
-      if (!documentMap.has(title)) {
-        documentMap.set(title, {
-          id: match.id,
-          metadata: {
-            title,
-            source: metadata.source || 'Unknown',
-            type: metadata.type || 'Unknown',
-            totalChunks: metadata.totalChunks || 1,
-            uploadDate: metadata.uploadDate,
-            fileName: metadata.fileName,
-          },
-        });
+    // Group documents by file name
+    const groupedDocuments: Record<string, { 
+      fileName: string; 
+      uploadedAt?: string;
+      chunks: number;
+    }> = {};
+    
+    documents.forEach(doc => {
+      if (doc.fileName) {
+        if (!groupedDocuments[doc.fileName]) {
+          groupedDocuments[doc.fileName] = {
+            fileName: doc.fileName,
+            uploadedAt: doc.uploadedAt as string | undefined,
+            chunks: 0
+          };
+        }
+        groupedDocuments[doc.fileName].chunks++;
       }
     });
     
-    // Convert to array
-    const documents = Array.from(documentMap.values());
-    
-    // Sort by upload date (newest first)
-    documents.sort((a, b) => {
-      const dateA = a.metadata.uploadDate ? new Date(a.metadata.uploadDate).getTime() : 0;
-      const dateB = b.metadata.uploadDate ? new Date(b.metadata.uploadDate).getTime() : 0;
-      return dateB - dateA;
-    });
-    
     return NextResponse.json({
-      documents,
-      count: documents.length,
+      documents: Object.values(groupedDocuments)
     });
   } catch (error) {
     console.error('Error fetching documents:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch documents', details: String(error) },
+      { error: 'Failed to fetch documents' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    // Get the request body
+    const { fileName } = await req.json();
+    
+    if (!fileName) {
+      return NextResponse.json(
+        { error: 'File name is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Get Pinecone index
+    const index = await getIndex();
+    
+    // Query vectors by fileName to get IDs
+    const queryResponse = await index.query({
+      filter: {
+        fileName: { $eq: fileName }
+      },
+      topK: 1000,
+      includeMetadata: false,
+    });
+    
+    // Get IDs to delete
+    const idsToDelete = queryResponse.matches.map(match => match.id);
+    
+    if (idsToDelete.length > 0) {
+      // Delete vectors in batches
+      const batchSize = 100;
+      for (let i = 0; i < idsToDelete.length; i += batchSize) {
+        const batch = idsToDelete.slice(i, i + batchSize);
+        await index.deleteMany(batch);
+      }
+    }
+    
+    return NextResponse.json({
+      success: true,
+      deletedCount: idsToDelete.length,
+      fileName
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete document' },
       { status: 500 }
     );
   }

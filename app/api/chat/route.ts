@@ -1,52 +1,88 @@
+// app/api/chat/route.ts
 import { NextResponse } from 'next/server';
-import { Message } from '@/app/types';
 import togetherClient, { modelName } from '@/app/lib/together-client';
-import { querySimilarDocuments, formatRetrievedContext } from '@/app/lib/embedding-utils';
+import { generateEmbeddings } from '@/app/lib/embeddings';
+import { querySimilarChunks } from '@/app/lib/pinecone-client';
 
-// Change this from 'edge' to 'nodejs' to support Pinecone
-export const runtime = 'nodejs';
+// Define types locally for the API route
+type MessageRole = 'user' | 'assistant' | 'system';
+
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, useUploadedFiles } = await req.json();
     
     console.log("API route called with messages:", messages);
     
-    // Extract the latest user message for context retrieval
-    const latestUserMessage = [...messages].reverse().find((msg: Message) => msg.role === 'user');
+    // If using uploaded files, get the most recent user message
+    // and search for relevant context
+    let contextFromFiles = '';
     
-    // Retrieve relevant context from Pinecone if there's a user message
-    let contextPrompt = '';
-    if (latestUserMessage) {
-      try {
-        // Get similar documents from vector store
-        const similarDocs = await querySimilarDocuments(latestUserMessage.content, 3);
+    if (useUploadedFiles) {
+      const userMessages = messages.filter((msg: {role: MessageRole}) => msg.role === 'user');
+      if (userMessages.length > 0) {
+        const latestUserMessage = userMessages[userMessages.length - 1];
         
-        // Format retrieved documents into context
-        if (similarDocs.length > 0) {
-          contextPrompt = formatRetrievedContext(similarDocs);
-          console.log("Retrieved context:", contextPrompt);
+        // Generate an embedding for the query
+        const queryEmbedding = await generateEmbeddings([
+          {
+            id: 'query',
+            fileId: 'query',
+            content: latestUserMessage.content,
+            metadata: {
+              fileName: 'query',
+              chunkIndex: 0,
+            },
+          }
+        ]);
+        
+        // Check if we have values from the embedding
+        if (queryEmbedding && queryEmbedding[0]?.values) {
+          // Search for similar chunks
+          const similarChunks = await querySimilarChunks(
+            queryEmbedding[0].values,
+            3 // Get top 3 most relevant chunks
+          );
+          
+          // Format the context from retrieved chunks
+          if (similarChunks && similarChunks.length > 0) {
+            contextFromFiles = `
+              Additional context from uploaded documents:
+              ${similarChunks.map(chunk => 
+                `From "${chunk.metadata.fileName}":
+                 ${chunk.content}
+                 ---
+                `
+              ).join('\n')}
+            `;
+          }
         }
-      } catch (error) {
-        console.error("Error retrieving context:", error);
-        // Continue without context if retrieval fails
       }
     }
     
-    // Add system message with context if we have it
-    const systemMessage = {
-      role: 'system' as const,
-      content: `You are Macbot, an AI assistant specialized in helping students understand Shakespeare's Macbeth. You can explain themes, characters, plot points, literary devices, and historical context. Your responses should be educational, clear, and engaging. When appropriate, cite specific acts, scenes, and lines from the play. If you don't know an answer, admit that rather than making up information. Always maintain an educational and supportive tone.${contextPrompt ? '\n\n' + contextPrompt : ''}`
-    };
+    // Format messages for Together.ai
+    const formattedMessages = messages.map((msg: {role: MessageRole; content: string}) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
     
-    // Format messages for Together.ai, adding the system message with context
-    const formattedMessages = [
-      systemMessage,
-      ...messages.filter((msg: Message) => msg.role !== 'system').map((msg: Message) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
-    ];
+    // If we have context from files, add it to the system message
+    if (contextFromFiles) {
+      // Find existing system message index
+      const systemMessageIndex = formattedMessages.findIndex((msg: {role: MessageRole}) => msg.role === 'system');
+      
+      if (systemMessageIndex >= 0) {
+        // Update existing system message
+        formattedMessages[systemMessageIndex].content += `\n\n${contextFromFiles}`;
+      } else {
+        // Add new system message with context
+        formattedMessages.unshift({
+          role: 'system',
+          content: `You are Macbot, an AI assistant specialized in helping students understand Shakespeare's Macbeth. ${contextFromFiles}`,
+        });
+      }
+    }
     
     // Initialize streaming response from Together.ai
     const response = await togetherClient.chat.completions.create({
@@ -57,7 +93,7 @@ export async function POST(req: Request) {
       max_tokens: 1000,
     });
     
-    // Create a ReadableStream for the response
+    // Convert the stream to a readable stream
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();

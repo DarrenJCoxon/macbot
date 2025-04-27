@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { nanoid } from 'nanoid';
 import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
+import FileUpload from './FileUpload';
 import { 
   ChatContainer, 
   MessagesList, 
@@ -21,9 +22,39 @@ export default function Chat() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasUploadedFiles, setHasUploadedFiles] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
+  };
+
+  const handleFileUpload = async (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('File upload failed');
+    }
+    
+    setHasUploadedFiles(true);
+    
+    // Add a message from the assistant acknowledging the upload
+    const responseData = await response.json();
+    setMessages(prev => [
+      ...prev,
+      {
+        id: nanoid(),
+        role: 'assistant',
+        content: `I've processed your ${files.length > 1 ? 'files' : 'file'}: ${responseData.fileNames.join(', ')}. You can now ask me questions about the content!`,
+      }
+    ]);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -45,7 +76,7 @@ export default function Chat() {
     setInput('');
     
     try {
-      // Send to API
+      // Send to API with information about whether files have been uploaded
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -53,6 +84,7 @@ export default function Chat() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
+          useUploadedFiles: hasUploadedFiles,
         }),
       });
       
@@ -112,6 +144,7 @@ export default function Chat() {
 
   return (
     <ChatContainer>
+      <FileUpload onFileUpload={handleFileUpload} />
       <MessagesList>
         {messages.map(message => 
           message.role !== 'system' && (
