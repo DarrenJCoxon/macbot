@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     console.log('Environment check:', {
       TOGETHER_API_KEY: !!process.env.TOGETHER_API_KEY,
       PINECONE_API_KEY: !!process.env.PINECONE_API_KEY,
-      PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME,
+      PINECONE_INDEX: process.env.PINECONE_INDEX,
       ADMIN_API_KEY: !!process.env.ADMIN_API_KEY,
     });
     

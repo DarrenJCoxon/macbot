@@ -1,0 +1,2949 @@
+// app/types/index.ts
+
+// Message Types
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  createdAt?: Date;
+}
+  
+// Chat History Type
+export interface ChatHistory {
+  messages: Message[];
+}
+  
+// Together.ai Response Types
+export interface TogetherStreamChunk {
+  choices: {
+    delta: {
+      content?: string;
+    };
+    index: number;
+  }[];
+}
+
+// Add new types for file handling
+export interface UploadedFile {
+  id: string;
+  name: string;
+  contentType: string;
+  size: number;
+  uploadedAt: Date;
+}
+
+export interface FileChunk {
+  id: string;
+  fileId: string;
+  content: string;
+  metadata: {
+    fileName: string;
+    pageNumber?: number;
+    chunkIndex: number;
+  };
+}
+
+export interface VectorSearchResult {
+  id: string;
+  score: number;
+  content: string;
+  metadata: {
+    fileName: string;
+    pageNumber?: number;
+    chunkIndex: number;
+  };
+}.page {
+  --gray-rgb: 0, 0, 0;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
+
+  --button-primary-hover: #383838;
+  --button-secondary-hover: #f2f2f2;
+
+  display: grid;
+  grid-template-rows: 20px 1fr 20px;
+  align-items: center;
+  justify-items: center;
+  min-height: 100svh;
+  padding: 80px;
+  gap: 64px;
+  font-family: var(--font-geist-sans);
+}
+
+@media (prefers-color-scheme: dark) {
+  .page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+    --button-primary-hover: #ccc;
+    --button-secondary-hover: #1a1a1a;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  grid-row-start: 2;
+}
+
+.main ol {
+  font-family: var(--font-geist-mono);
+  padding-left: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  list-style-position: inside;
+}
+
+.main li:not(:last-of-type) {
+  margin-bottom: 8px;
+}
+
+.main code {
+  font-family: inherit;
+  background: var(--gray-alpha-100);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.ctas {
+  display: flex;
+  gap: 16px;
+}
+
+.ctas a {
+  appearance: none;
+  border-radius: 128px;
+  height: 48px;
+  padding: 0 20px;
+  border: none;
+  border: 1px solid transparent;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+a.primary {
+  background: var(--foreground);
+  color: var(--background);
+  gap: 8px;
+}
+
+a.secondary {
+  border-color: var(--gray-alpha-200);
+  min-width: 158px;
+}
+
+.footer {
+  grid-row-start: 3;
+  display: flex;
+  gap: 24px;
+}
+
+.footer a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer img {
+  flex-shrink: 0;
+}
+
+/* Enable hover only on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  a.primary:hover {
+    background: var(--button-primary-hover);
+    border-color: transparent;
+  }
+
+  a.secondary:hover {
+    background: var(--button-secondary-hover);
+    border-color: transparent;
+  }
+
+  .footer a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 32px;
+    padding-bottom: 80px;
+  }
+
+  .main {
+    align-items: center;
+  }
+
+  .main ol {
+    text-align: center;
+  }
+
+  .ctas {
+    flex-direction: column;
+  }
+
+  .ctas a {
+    font-size: 14px;
+    height: 40px;
+    padding: 0 16px;
+  }
+
+  a.secondary {
+    min-width: auto;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo {
+    filter: invert();
+  }
+}
+import styled from 'styled-components';
+
+export const ChatContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+export const MessagesList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const MessageBubble = styled.div<{ $isUser: boolean }>`
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  align-self: ${props => (props.$isUser ? 'flex-end' : 'flex-start')};
+  background-color: ${props => (props.$isUser ? 'var(--primary)' : 'var(--gray-200)')};
+  color: ${props => (props.$isUser ? '#fff' : 'var(--gray-800)')};
+`;
+
+export const InputForm = styled.form`
+  border-top: 1px solid var(--gray-300);
+  padding: 16px;
+`;
+
+export const InputContainer = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const TextInput = styled.input`
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+  }
+  
+  &:disabled {
+    background-color: var(--gray-100);
+    cursor: not-allowed;
+  }
+`;
+
+export const SendButton = styled.button`
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const LoadingIndicator = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  color: var(--gray-800);
+  
+  &::after {
+    content: "...";
+    animation: ellipsis 1.5s infinite;
+  }
+  
+  @keyframes ellipsis {
+    0% {
+      content: ".";
+    }
+    33% {
+      content: "..";
+    }
+    66% {
+      content: "...";
+    }
+  }
+`;
+
+export const PageContainer = styled.main`
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+`;
+
+export const ContentContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+`;
+
+export const PageTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+export const PageSubtitle = styled.h2`
+  font-size: 1.25rem;
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--gray-800);
+`;'use client';
+
+import React, { useState, useRef } from 'react';
+import styled from 'styled-components';
+
+const UploaderContainer = styled.div`
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+`;
+
+const UploaderTitle = styled.h3`
+  margin-bottom: 16px;
+  color: var(--gray-800);
+`;
+
+const UploadForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const FileInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FileInputLabel = styled.label`
+  padding: 12px;
+  background-color: var(--gray-100);
+  border: 1px dashed var(--gray-300);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: var(--gray-200);
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+const MetadataContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const InputLabel = styled.label`
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-800);
+`;
+
+const TextInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  
+  &:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+`;
+
+const UploadButton = styled.button`
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const StatusMessage = styled.p<{ $isError?: boolean }>`
+  margin-top: 12px;
+  padding: 8px 12px;
+  background-color: ${props => props.$isError ? '#fee2e2' : '#ecfdf5'};
+  color: ${props => props.$isError ? '#b91c1c' : '#047857'};
+  border-radius: 6px;
+  font-size: 14px;
+`;
+
+const SelectedFileName = styled.div`
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--gray-800);
+`;
+
+interface DocumentMetadata {
+  title: string;
+  source: string;
+  type: string;
+}
+
+export default function DocumentUploader() {
+  const [file, setFile] = useState<File | null>(null);
+  const [metadata, setMetadata] = useState<DocumentMetadata>({
+    title: '',
+    source: '',
+    type: 'notes', // Default type
+  });
+  const [status, setStatus] = useState<{ message: string; isError: boolean } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    setFile(selectedFile);
+    
+    // Reset status when a new file is selected
+    setStatus(null);
+    
+    // Auto-populate title from filename if empty
+    if (selectedFile && !metadata.title) {
+      const fileName = selectedFile.name.replace(/\.[^/.]+$/, ""); // Remove file extension
+      setMetadata(prev => ({
+        ...prev,
+        title: fileName,
+      }));
+    }
+  };
+  
+  const handleMetadataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMetadata(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!file) {
+      setStatus({
+        message: 'Please select a file to upload',
+        isError: true,
+      });
+      return;
+    }
+    
+    // Check file extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    if (fileExt !== 'txt') {
+      setStatus({
+        message: 'Only .txt files are supported at this time',
+        isError: true,
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    setStatus(null);
+    
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('metadata', JSON.stringify(metadata));
+      
+      // Upload to API
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setStatus({
+          message: data.message || 'Document uploaded and processed successfully!',
+          isError: false,
+        });
+        
+        // Reset form
+        setFile(null);
+        setMetadata({
+          title: '',
+          source: '',
+          type: 'notes',
+        });
+        
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else {
+        setStatus({
+          message: data.error || 'Failed to upload document',
+          isError: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      setStatus({
+        message: 'An unexpected error occurred',
+        isError: true,
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  return (
+    <UploaderContainer>
+      <UploaderTitle>Upload Documents</UploaderTitle>
+      <UploadForm onSubmit={handleSubmit}>
+        <FileInputContainer>
+          <FileInputLabel htmlFor="document-upload">
+            {file ? 'Change selected file' : 'Click to select a file (.txt only)'}
+          </FileInputLabel>
+          <HiddenFileInput
+            id="document-upload"
+            type="file"
+            accept=".txt"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+          />
+          {file && <SelectedFileName>{file.name}</SelectedFileName>}
+        </FileInputContainer>
+        
+        <MetadataContainer>
+          <InputLabel htmlFor="title">Document Title</InputLabel>
+          <TextInput
+            id="title"
+            name="title"
+            value={metadata.title}
+            onChange={handleMetadataChange}
+            placeholder="E.g., Macbeth Analysis"
+            required
+          />
+        </MetadataContainer>
+        
+        <MetadataContainer>
+          <InputLabel htmlFor="source">Source</InputLabel>
+          <TextInput
+            id="source"
+            name="source"
+            value={metadata.source}
+            onChange={handleMetadataChange}
+            placeholder="E.g., Lecture Notes, Study Guide"
+          />
+        </MetadataContainer>
+        
+        <UploadButton type="submit" disabled={isUploading || !file}>
+          {isUploading ? 'Uploading...' : 'Upload Document'}
+        </UploadButton>
+        
+        {status && (
+          <StatusMessage $isError={status.isError}>
+            {status.message}
+          </StatusMessage>
+        )}
+      </UploadForm>
+    </UploaderContainer>
+  );
+}import { useState } from 'react';
+import styled from 'styled-components';
+
+const UploadContainer = styled.div`
+  margin-bottom: 24px;
+`;
+
+const UploadButton = styled.label`
+  display: inline-block;
+  background-color: var(--gray-200);
+  color: var(--gray-800);
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: var(--gray-300);
+  }
+`;
+
+const HiddenInput = styled.input`
+  display: none;
+`;
+
+const FileList = styled.ul`
+  list-style: none;
+  margin-top: 12px;
+  padding: 0;
+`;
+
+const FileItem = styled.li`
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: var(--gray-100);
+  border-radius: 4px;
+  font-size: 14px;
+`;
+
+const FileName = styled.span`
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const FileStatus = styled.span<{ $isSuccess?: boolean; $isError?: boolean }>`
+  margin-left: 8px;
+  font-size: 12px;
+  color: ${props => 
+    props.$isSuccess ? 'green' : 
+    props.$isError ? 'red' : 
+    'var(--gray-800)'};
+`;
+
+type FileUploadProps = {
+  onFileUpload: (files: File[]) => Promise<void>;
+};
+
+export default function FileUpload({ onFileUpload }: FileUploadProps) {
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    file: File;
+    status: 'uploading' | 'success' | 'error';
+  }>>([]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    
+    const files = Array.from(e.target.files);
+    
+    // Update UI immediately
+    setUploadedFiles(prev => [
+      ...prev,
+      ...files.map(file => ({ file, status: 'uploading' as const }))
+    ]);
+    
+    try {
+      // Handle the actual upload
+      await onFileUpload(files);
+      
+      // Update status to success
+      setUploadedFiles(prev => 
+        prev.map(item => 
+          files.some(f => f.name === item.file.name && f.size === item.file.size)
+            ? { ...item, status: 'success' as const }
+            : item
+        )
+      );
+    } catch (error) {
+      // Update status to error
+      setUploadedFiles(prev => 
+        prev.map(item => 
+          files.some(f => f.name === item.file.name && f.size === item.file.size)
+            ? { ...item, status: 'error' as const }
+            : item
+        )
+      );
+      console.error('File upload error:', error);
+    }
+  };
+
+  return (
+    <UploadContainer>
+      <UploadButton htmlFor="file-upload">
+        Upload Macbeth Documents
+      </UploadButton>
+      <HiddenInput
+        id="file-upload"
+        type="file"
+        multiple
+        accept=".pdf,.txt,.docx,.md"
+        onChange={handleFileChange}
+      />
+      
+      {uploadedFiles.length > 0 && (
+        <FileList>
+          {uploadedFiles.map((item, index) => (
+            <FileItem key={`${item.file.name}-${index}`}>
+              <FileName>{item.file.name}</FileName>
+              <FileStatus
+                $isSuccess={item.status === 'success'}
+                $isError={item.status === 'error'}
+              >
+                {item.status === 'uploading' && 'Uploading...'}
+                {item.status === 'success' && 'Uploaded'}
+                {item.status === 'error' && 'Failed'}
+              </FileStatus>
+            </FileItem>
+          ))}
+        </FileList>
+      )}
+    </UploadContainer>
+  );
+}'use client';
+
+import React, { useState } from 'react';
+import styled from 'styled-components';
+
+const AdminContainer = styled.div`
+  margin-top: 40px;
+  padding: 20px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+`;
+
+const AdminTitle = styled.h3`
+  margin-bottom: 16px;
+  color: var(--gray-800);
+`;
+
+const AdminButton = styled.button`
+  background-color: #4a4a4a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover:not(:disabled) {
+    background-color: #333;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const StatusMessage = styled.p<{ $isError?: boolean }>`
+  margin-top: 16px;
+  color: ${props => props.$isError ? 'red' : 'green'};
+`;
+
+export default function AdminPanel() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+  
+  const seedDatabase = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setStatus('Seeding database with Macbeth content...');
+    setIsError(false);
+    
+    try {
+      // Get admin API key from environment or prompt user
+      const adminApiKey = prompt('Enter admin API key:');
+      
+      if (!adminApiKey) {
+        setStatus('Seeding cancelled');
+        setIsLoading(false);
+        return;
+      }
+      
+      const response = await fetch('/api/seed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminApiKey}`,
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setStatus(data.message || 'Successfully seeded database!');
+        setIsError(false);
+      } else {
+        setStatus(`Error: ${data.error || 'Failed to seed database'}`);
+        setIsError(true);
+      }
+    } catch (error) {
+      console.error('Error seeding database:', error);
+      setStatus('An unexpected error occurred while seeding the database.');
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return (
+    <AdminContainer>
+      <AdminTitle>Admin Panel</AdminTitle>
+      <AdminButton 
+        onClick={seedDatabase}
+        disabled={isLoading}
+      >
+        {isLoading ? 'Seeding...' : 'Seed Pinecone Database'}
+      </AdminButton>
+      
+      {status && (
+        <StatusMessage $isError={isError}>
+          {status}
+        </StatusMessage>
+      )}
+    </AdminContainer>
+  );
+}'use client';
+
+import { useState, FormEvent } from 'react';
+import { nanoid } from 'nanoid';
+import ChatInput from './ChatInput';
+import ChatMessage from './ChatMessage';
+import FileUpload from './FileUpload';
+import {
+  ChatContainer,
+  MessagesList,
+  LoadingIndicator
+} from '@/app/styles/ChatStyles';
+import { Message } from '@/app/types';
+
+export default function Chat() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'system-1',
+      role: 'system',
+      content: "You are Macbot, an AI assistant specialized in helping students understand Shakespeare's Macbeth. You can explain themes, characters, plot points, literary devices, and historical context. Your responses should be educational, clear, and engaging. When appropriate, cite specific acts, scenes, and lines from the play. If you don't know an answer, admit that rather than making up information. Always maintain an educational and supportive tone."
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasUploadedFiles, setHasUploadedFiles] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ error: boolean; message: string | null }>({ error: false, message: null });
+
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleFileUpload = async (files: File[]) => {
+    console.log('[Chat.tsx] handleFileUpload received files:', files);
+    setUploadStatus({ error: false, message: 'Uploading files...' });
+
+    if (!files || files.length === 0) {
+        console.error('[Chat.tsx] handleFileUpload received no files!');
+        setUploadStatus({ error: true, message: 'No files were selected.' });
+        return;
+    }
+
+    const formData = new FormData();
+    const serverExpectedFileKey = 'files';
+
+    files.forEach((file, index) => {
+      console.log(`[Chat.tsx] Preparing to append file ${index}:`, file); // Log the file object
+      if (file instanceof File) {
+          formData.append(serverExpectedFileKey, file, file.name);
+          console.log(`[Chat.tsx] Appended file ${index}: ${file.name} (size: ${file.size}) to formData with key '${serverExpectedFileKey}'`);
+      } else {
+          console.error(`[Chat.tsx] Item at index ${index} is not a valid File object:`, file);
+          setUploadStatus({ error: true, message: `Invalid item detected during upload preparation.` });
+          return; // Stop if an invalid item is found
+      }
+    });
+
+    const formDataKeys = Array.from(formData.keys());
+    console.log('[Chat.tsx] FormData keys before sending:', formDataKeys);
+    if (!formDataKeys.includes(serverExpectedFileKey)) {
+        console.error(`[Chat.tsx] Critical error: FormData does not contain the key '${serverExpectedFileKey}' after appending files.`);
+        setUploadStatus({ error: true, message: `Internal error preparing upload data.` });
+        return;
+    }
+
+    // --- ADDING FINAL CHECK ---
+    const filesInFormData = formData.getAll(serverExpectedFileKey);
+    console.log(`[Chat.tsx] Final check: formData.getAll('${serverExpectedFileKey}') found ${filesInFormData.length} entries.`);
+    if (filesInFormData.length !== files.length) {
+        console.error(`[Chat.tsx] Mismatch! Expected ${files.length} files in FormData, but getAll found ${filesInFormData.length}.`);
+        // Log the entries found for more detail
+        filesInFormData.forEach((entry, idx) => console.log(`[Chat.tsx] FormData entry ${idx}:`, entry));
+    } else {
+        console.log(`[Chat.tsx] Final check: Number of files in FormData matches input files array.`);
+    }
+    // --- END FINAL CHECK ---
+
+
+    console.log('[Chat.tsx] Sending fetch request to /api/upload...');
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+            // No Content-Type header needed here
+        });
+
+        console.log(`[Chat.tsx] Received response from /api/upload with status: ${response.status}`);
+
+        if (!response.ok) {
+            let errorDetails = `Server returned status ${response.status}`;
+            try {
+                 const errorData = await response.json();
+                 errorDetails = errorData.error || errorData.message || JSON.stringify(errorData);
+            } catch {
+                 try { errorDetails = await response.text(); } catch {}
+            }
+            console.error(`[Chat.tsx] File upload fetch failed! Status: ${response.status}, Details: ${errorDetails}`);
+            setUploadStatus({ error: true, message: `Upload failed: ${errorDetails}` });
+            throw new Error(`File upload failed: ${errorDetails}`);
+        }
+
+        // Success Handling
+        setHasUploadedFiles(true);
+        const responseData = await response.json();
+        console.log('[Chat.tsx] File upload successful. Response data:', responseData);
+        setUploadStatus({ error: false, message: responseData.message || 'Files uploaded successfully!' });
+
+        const processedFileNames = responseData.processedFiles?.map((f: { name: string }) => f.name) || responseData.fileNames || [];
+        setMessages(prev => [
+          ...prev,
+          {
+            id: nanoid(),
+            role: 'assistant',
+            content: `I've processed your ${processedFileNames.length > 1 ? 'files' : 'file'}: ${processedFileNames.join(', ')}. You can now ask me questions about the content!`,
+          }
+        ]);
+
+    } catch (error) {
+        console.error('[Chat.tsx] Error during file upload fetch or processing:', error);
+        if (!uploadStatus.error) {
+             setUploadStatus({ error: true, message: error instanceof Error ? error.message : 'An unknown network error occurred during upload.' });
+        }
+    }
+  };
+
+
+  // --- handleSubmit function remains the same ---
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: nanoid(),
+      role: 'user',
+      content: input,
+      createdAt: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setInput('');
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          useUploadedFiles: hasUploadedFiles,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorDetails = `HTTP error! status: ${response.status}`;
+        try {
+            const errorData = await response.json();
+            errorDetails = errorData.error || JSON.stringify(errorData);
+        } catch {
+            try { errorDetails = await response.text() || errorDetails; } catch {}
+        }
+         console.error(`[Chat.tsx] Chat API error: ${errorDetails}`);
+        throw new Error(errorDetails);
+      }
+
+      if (response.body) {
+        const responseId = nanoid();
+        setMessages(prev => [
+          ...prev,
+          { id: responseId, role: 'assistant', content: '' }
+        ]);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let responseText = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          responseText += chunk;
+
+          setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessageIndex = newMessages.findLastIndex(m => m.id === responseId);
+            if (lastMessageIndex !== -1) {
+                newMessages[lastMessageIndex] = { ...newMessages[lastMessageIndex], content: responseText };
+            } else {
+                console.error("[Chat.tsx] Could not find message with ID to update:", responseId);
+            }
+            return newMessages;
+          });
+        }
+        setIsLoading(false);
+      } else {
+          console.warn("[Chat.tsx] Chat API response was ok but had no body.");
+          setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('[Chat.tsx] Error sending chat message:', error);
+      setIsLoading(false);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: nanoid(),
+          role: 'assistant',
+          content: `Sorry, there was an error generating a response. Details: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }
+      ]);
+    }
+  };
+
+
+  return (
+    <ChatContainer>
+      <FileUpload onFileUpload={handleFileUpload} />
+       {uploadStatus.message && (
+         <p style={{ padding: '8px 16px', color: uploadStatus.error ? 'red' : 'green', fontSize: '0.9em' }}>
+           Upload Status: {uploadStatus.message}
+         </p>
+       )}
+      <MessagesList>
+        {messages.map(message =>
+          message.role !== 'system' && (
+            <ChatMessage key={message.id} message={message} />
+          )
+        )}
+        {isLoading && <LoadingIndicator>Macbot is thinking</LoadingIndicator>}
+      </MessagesList>
+      <ChatInput
+        value={input}
+        onChange={handleInputChange}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+      />
+    </ChatContainer>
+  );
+}'use client';
+
+import { Message } from '@/app/types';
+import { MessageBubble } from '@/app/styles/ChatStyles';
+
+type ChatMessageProps = {
+  message: Message;
+};
+
+export default function ChatMessage({ message }: ChatMessageProps) {
+  const isUser = message.role === 'user';
+  
+  return (
+    <MessageBubble $isUser={isUser}>
+      {message.content}
+    </MessageBubble>
+  );
+}'use client';
+
+import { FormEvent } from 'react';
+import { 
+  InputForm, 
+  InputContainer, 
+  TextInput, 
+  SendButton 
+} from '@/app/styles/ChatStyles';
+
+type ChatInputProps = {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  isLoading: boolean;
+};
+
+export default function ChatInput({ 
+  value, 
+  onChange, 
+  onSubmit, 
+  isLoading 
+}: ChatInputProps) {
+  return (
+    <InputForm onSubmit={onSubmit}>
+      <InputContainer>
+        <TextInput
+          type="text"
+          value={value}
+          onChange={onChange}
+          placeholder="Ask about Macbeth..."
+          disabled={isLoading}
+        />
+        <SendButton 
+          type="submit" 
+          disabled={isLoading || !value.trim()}
+        >
+          Send
+        </SendButton>
+      </InputContainer>
+    </InputForm>
+  );
+}import { Inter } from 'next/font/google';
+import type { Metadata } from 'next';
+import './globals.css';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Macbot - Your Macbeth Study Assistant',
+  description: 'AI-powered chatbot to help students study Shakespeare\'s Macbeth',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}import Together from "together-ai";
+
+// Check if the API key is defined
+const apiKey = process.env.TOGETHER_API_KEY;
+
+if (!apiKey) {
+  console.error("Missing TOGETHER_API_KEY environment variable");
+}
+
+// Initialize the Together client
+const togetherClient = new Together({
+  apiKey: apiKey || "",
+});
+
+export const modelName = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free";
+
+export default togetherClient;// app/lib/pinecone-client.ts
+import {
+  Pinecone,
+  PineconeRecord,
+  // --- Recommended: Import specific error types if available in your SDK version ---
+  // You might find types like PineconeNotFoundError, PineconeConflictError etc.
+  // Check the @pinecone-database/pinecone package's exports or documentation.
+  // If available, use 'instanceof PineconeNotFoundError' etc. below for more reliable checks.
+} from '@pinecone-database/pinecone';
+import { VectorSearchResult } from '@/app/types'; // Your application's search result type
+
+// --- Environment Variables ---
+const pineconeApiKey = process.env.PINECONE_API_KEY;
+const pineconeIndexName = process.env.PINECONE_INDEX; // Ensure this matches .env.local
+
+// Basic check for environment variables
+if (!pineconeApiKey) {
+  console.error('ERROR: Missing Pinecone API key. Please set PINECONE_API_KEY environment variable.');
+  // Consider throwing an error here to prevent startup in production
+  // throw new Error('Missing Pinecone API key.');
+}
+if (!pineconeIndexName) {
+  console.error('ERROR: Missing Pinecone index name. Please set PINECONE_INDEX environment variable.');
+  // Consider throwing an error here to prevent startup in production
+  // throw new Error('Missing Pinecone index name.');
+}
+
+// --- Metadata Type Definition for Pinecone Storage ---
+// This defines how metadata should be structured when STORED in Pinecone.
+export type PineconeDocumentMetadata = {
+  fileName: string;
+  pageNumber?: string; // Store as string | undefined
+  chunkIndex: string; // Store as string (assuming every chunk has an index)
+  content: string; // The actual text content of the chunk
+  uploadedAt?: string; // Optional: Timestamp as ISO string
+};
+
+// --- Initialize Pinecone Client ---
+const pinecone = new Pinecone({
+  apiKey: pineconeApiKey || 'MISSING_API_KEY', // Provide fallback or ensure checks above throw
+});
+
+// --- Get or Create Index Function ---
+// Ensures the index exists and is ready before returning a handle to it.
+export const getIndex = async () => {
+  // Ensure index name is available before proceeding
+  if (!pineconeIndexName) {
+    throw new Error("Pinecone index name is not configured.");
+  }
+
+  console.log(`Attempting to get or create Pinecone index: ${pineconeIndexName}`);
+  try {
+    // 1. Try to describe the index to check if it exists and is ready
+    await pinecone.describeIndex(pineconeIndexName);
+    console.log(`Index '${pineconeIndexName}' found.`);
+    // If describeIndex succeeds, the index exists. Return the index handle.
+    return pinecone.index<PineconeDocumentMetadata>(pineconeIndexName);
+
+  } catch (error: unknown) { // Catch errors from describeIndex
+    // 2. Check if the error specifically indicates the index was not found
+    let isNotFoundError = false;
+
+    // Check 1: Check for specific error properties (more reliable)
+    if (typeof error === 'object' && error !== null) {
+        // Check if error object has a 'status' property equal to 404
+        if ('status' in error && (error as { status: number }).status === 404) {
+            isNotFoundError = true;
+            console.log(`describeIndex error identified as 404 Not Found via status code.`);
+        }
+        // Check if error object has a 'name' property identifying it (adjust if SDK uses a different name)
+        else if ('name' in error && (error as { name: string }).name === 'PineconeNotFoundError') {
+             isNotFoundError = true;
+             console.log(`describeIndex error identified as PineconeNotFoundError via name.`);
+        }
+        // Add checks for other potential SDK-specific error structures if needed
+    }
+
+    // Check 2: Fallback to message check if status/name checks failed (less reliable)
+    if (!isNotFoundError && error instanceof Error) {
+        const errorMsgLower = error.message.toLowerCase();
+        // Refine message check - Pinecone 404 messages might vary slightly
+        if (errorMsgLower.includes('not found') && (errorMsgLower.includes('index') || errorMsgLower.includes(pineconeIndexName.toLowerCase()))) {
+            isNotFoundError = true;
+            console.log(`describeIndex error identified as 'not found' via message content.`);
+        }
+    }
+
+    // If none of the specific checks matched, log the raw error for debugging
+    if (!isNotFoundError && !(error instanceof Error && (error.message.includes('404') || error.message.includes('not found')))) {
+         console.log("describeIndex failed with an error that doesn't appear to be a 'Not Found' error:", error);
+    }
+
+
+    if (isNotFoundError) {
+      // 3. Index not found error identified, proceed to create it
+      console.log(`Index '${pineconeIndexName}' not found. Attempting creation...`);
+      try {
+        await pinecone.createIndex({
+          name: pineconeIndexName,
+          dimension: 768, // IMPORTANT: Ensure this matches your embedding model (m2-bert is 768d)
+          metric: 'cosine',
+          spec: {
+            serverless: {
+              cloud: 'aws',
+              region: 'us-east-1' // Ensure this is a valid and supported region
+            }
+          },
+          // Optional: Add waitUntilReady if needed
+          // waitUntilReady: true,
+          // timeout: 180000
+        });
+        console.log(`Index '${pineconeIndexName}' creation initiated with dimension 768. Waiting ~60 seconds...`);
+        // Simple wait. Consider increasing if index readiness takes longer.
+        await new Promise(resolve => setTimeout(resolve, 60000));
+        console.log(`Index '${pineconeIndexName}' assumed ready.`);
+        // Return the handle for the newly created index
+        return pinecone.index<PineconeDocumentMetadata>(pineconeIndexName);
+
+      } catch (creationError: unknown) {
+        // 4. Handle potential errors during the creation attempt itself
+        console.error(`Failed to create index '${pineconeIndexName}':`, creationError);
+
+        // Check specifically for a 409 conflict during create (race condition)
+        let isConflictError = false;
+         if (creationError instanceof Error) {
+             // Use instanceof PineconeConflictError if available
+             isConflictError = creationError.message.includes('409') || creationError.message.includes('ALREADY_EXISTS');
+         } else if (typeof creationError === 'object' && creationError !== null && 'status' in creationError && (creationError as { status: number }).status === 409) {
+             isConflictError = true;
+         }
+
+         if (isConflictError) {
+             console.warn(`Index creation failed with 409 Conflict. Assuming index '${pineconeIndexName}' exists now and returning handle.`);
+             return pinecone.index<PineconeDocumentMetadata>(pineconeIndexName); // Attempt to return handle anyway
+         }
+
+        throw creationError; // Re-throw other unexpected creation errors
+      }
+    } else {
+      // 5. The error from describeIndex was *not* identified as a 'not found' error.
+      console.error(`An unexpected error occurred when describing index '${pineconeIndexName}', and it was not identified as 'Not Found':`, error);
+      throw error; // Re-throw unexpected errors (e.g., auth failure, network issue)
+    }
+  }
+};
+
+
+// --- Insert Vectors Function ---
+// Expects vectors where metadata matches PineconeDocumentMetadata (strings for pageNumber/chunkIndex).
+export const insertVectors = async (
+  vectors: PineconeRecord<PineconeDocumentMetadata>[]
+) => {
+  if (!pineconeIndexName) {
+    throw new Error("Pinecone index name is not configured for insertVectors.");
+  }
+  if (!vectors || vectors.length === 0) {
+    console.warn("insertVectors called with no vectors. Skipping.");
+    return true;
+  }
+
+  try {
+    const index = await getIndex(); // Uses the robust getIndex logic above
+    console.log(`Inserting ${vectors.length} vectors into index '${pineconeIndexName}'`);
+
+    // Assumes input 'vectors' have metadata correctly formatted by the caller (e.g., generateEmbeddings)
+
+    const batchSize = 100;
+    for (let i = 0; i < vectors.length; i += batchSize) {
+      const batch = vectors.slice(i, i + batchSize);
+      console.log(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(vectors.length / batchSize)} (size: ${batch.length})`);
+      await index.upsert(batch); // Upsert the batch
+    }
+    console.log(`Successfully inserted ${vectors.length} vectors.`);
+    return true;
+  } catch (error) {
+    console.error('Error inserting vectors:', error);
+    throw error; // Re-throw error after logging
+  }
+};
+
+
+// --- Query Vectors Function ---
+// Fetches similar chunks and formats the result according to the application's VectorSearchResult type.
+export const querySimilarChunks = async (
+  queryEmbedding: number[],
+  topK: number = 5
+): Promise<VectorSearchResult[]> => {
+  if (!pineconeIndexName) {
+    throw new Error("Pinecone index name is not configured for querySimilarChunks.");
+  }
+  if (!queryEmbedding || queryEmbedding.length === 0) {
+    console.error("querySimilarChunks called with empty or invalid query embedding.");
+    return [];
+  }
+  // Add dimension check for the query vector before sending
+  if (queryEmbedding.length !== 768) { // Ensure this matches the expected index dimension
+       console.error(`Query embedding dimension mismatch. Expected 768, got ${queryEmbedding.length}.`);
+       // Return empty or throw error, depending on desired behavior
+       return [];
+  }
+
+
+  try {
+    const index = await getIndex(); // Get the index handle
+    console.log(`Querying index '${pineconeIndexName}' with topK=${topK}`);
+
+    const queryResponse = await index.query({
+      vector: queryEmbedding,
+      topK,
+      includeMetadata: true, // MUST be true to get metadata back
+    });
+    console.log(`Query returned ${queryResponse.matches?.length ?? 0} matches.`);
+
+    // Map results and parse metadata back to application types (VectorSearchResult)
+    const results: VectorSearchResult[] = [];
+    if (queryResponse.matches) {
+        for (const match of queryResponse.matches) {
+            const metadata = match.metadata as PineconeDocumentMetadata | undefined;
+
+            // Validate essential metadata existence
+            if (!metadata || typeof metadata.content !== 'string' || typeof metadata.fileName !== 'string' || typeof metadata.chunkIndex !== 'string') {
+                console.warn(`Skipping match ${match.id} due to missing or invalid essential metadata. Received:`, metadata);
+                continue;
+            }
+
+            const pageNumStr = metadata.pageNumber;
+            const chunkIdxStr = metadata.chunkIndex;
+
+            // Safely parse chunkIndex string to number
+            const chunkIndex = parseInt(chunkIdxStr, 10);
+            if (isNaN(chunkIndex)) {
+                console.warn(`Skipping match ${match.id} due to invalid chunkIndex metadata: '${chunkIdxStr}'`);
+                continue;
+            }
+
+            // Safely parse pageNumber string to number | undefined
+            let pageNumber: number | undefined = undefined;
+            if (typeof pageNumStr === 'string') {
+                const parsedPage = parseInt(pageNumStr, 10);
+                if (!isNaN(parsedPage)) {
+                    pageNumber = parsedPage;
+                } else {
+                    console.warn(`Match ${match.id}: Could not parse pageNumber string '${pageNumStr}' into a number.`);
+                }
+            }
+
+            // Construct the result object according to VectorSearchResult type
+            results.push({
+                id: match.id,
+                score: match.score ?? 0,
+                content: metadata.content,
+                metadata: {
+                    fileName: metadata.fileName,
+                    pageNumber: pageNumber,
+                    chunkIndex: chunkIndex,
+                },
+            });
+        }
+    }
+    return results;
+
+  } catch (error) {
+    console.error('Error querying vectors:', error);
+    throw error; // Re-throw error after logging
+  }
+};
+
+
+// --- Export Client Object (Optional but common pattern) ---
+const pineconeClient = {
+  insertVectors,
+  querySimilarChunks,
+  getIndex,
+};
+
+export default pineconeClient;import { VectorDocument } from "./embedding-utils";
+import { nanoid } from "nanoid";
+
+// Sample data from Macbeth for seeding the vector database
+export const macbethData: VectorDocument[] = [
+  {
+    id: nanoid(),
+    text: "Fair is foul, and foul is fair: Hover through the fog and filthy air.",
+    metadata: {
+      source: "Macbeth",
+      act: "1",
+      scene: "1",
+      character: "Witches",
+      theme: "Appearance vs. Reality",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Look like the innocent flower, but be the serpent under it.",
+    metadata: {
+      source: "Macbeth",
+      act: "1",
+      scene: "5",
+      character: "Lady Macbeth",
+      theme: "Appearance vs. Reality",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Is this a dagger which I see before me, The handle toward my hand? Come, let me clutch thee. I have thee not, and yet I see thee still. Art thou not, fatal vision, sensible To feeling as to sight? or art thou but A dagger of the mind, a false creation, Proceeding from the heat-oppressed brain?",
+    metadata: {
+      source: "Macbeth",
+      act: "2",
+      scene: "1",
+      character: "Macbeth",
+      theme: "Hallucinations",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Out, damned spot! out, I say! One: two: why, then, 'tis time to do't. Hell is murky! Fie, my lord, fie! a soldier, and afeard? What need we fear who knows it, when none can call our power to account? Yet who would have thought the old man to have had so much blood in him.",
+    metadata: {
+      source: "Macbeth",
+      act: "5",
+      scene: "1",
+      character: "Lady Macbeth",
+      theme: "Guilt",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Tomorrow, and tomorrow, and tomorrow, Creeps in this petty pace from day to day To the last syllable of recorded time, And all our yesterdays have lighted fools The way to dusty death. Out, out, brief candle! Life's but a walking shadow, a poor player That struts and frets his hour upon the stage And then is heard no more: it is a tale Told by an idiot, full of sound and fury, Signifying nothing.",
+    metadata: {
+      source: "Macbeth",
+      act: "5",
+      scene: "5",
+      character: "Macbeth",
+      theme: "Nihilism",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "By the pricking of my thumbs, Something wicked this way comes.",
+    metadata: {
+      source: "Macbeth",
+      act: "4",
+      scene: "1",
+      character: "Second Witch",
+      theme: "Foreshadowing",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Double, double toil and trouble; Fire burn, and cauldron bubble.",
+    metadata: {
+      source: "Macbeth",
+      act: "4",
+      scene: "1",
+      character: "Witches",
+      theme: "Supernatural",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "The castle of Macduff I will surprise; Seize upon Fife; give to the edge o' the sword His wife, his babes, and all unfortunate souls That trace him in his line. No boasting like a fool; This deed I'll do before this purpose cool.",
+    metadata: {
+      source: "Macbeth",
+      act: "4",
+      scene: "1",
+      character: "Macbeth",
+      theme: "Revenge",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "I dare do all that may become a man; Who dares do more is none.",
+    metadata: {
+      source: "Macbeth",
+      act: "1",
+      scene: "7",
+      character: "Macbeth",
+      theme: "Manhood",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Macbeth returns from a victorious battle and meets three witches who prophecize that he will become the Thane of Cawdor and eventually King of Scotland. Soon after, he learns that he has indeed been named Thane of Cawdor, which makes him believe the rest of the prophecy.",
+    metadata: {
+      source: "Macbeth",
+      act: "1",
+      scene: "3",
+      character: "Plot Summary",
+      theme: "Prophecy",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Lady Macbeth urges her husband to kill King Duncan when he visits their castle. After initial hesitation, Macbeth murders the king and becomes the new ruler of Scotland, fulfilling the witches' prophecy.",
+    metadata: {
+      source: "Macbeth",
+      act: "2",
+      scene: "General",
+      character: "Plot Summary",
+      theme: "Ambition",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Guilt plagues both Macbeth and Lady Macbeth. While Macbeth sees hallucinations, including Banquo's ghost, Lady Macbeth sleepwalks and tries to wash imaginary blood from her hands.",
+    metadata: {
+      source: "Macbeth",
+      act: "General",
+      scene: "General",
+      character: "Analysis",
+      theme: "Guilt",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "The witches give Macbeth three warnings: beware Macduff, no man born of woman can harm him, and he will not be defeated until Birnam Wood comes to Dunsinane Hill. These prophecies give Macbeth false confidence.",
+    metadata: {
+      source: "Macbeth",
+      act: "4",
+      scene: "1",
+      character: "Plot Summary",
+      theme: "Prophecy",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "In the end, Macduff reveals he was 'untimely ripped' from his mother's womb (C-section), and thus not technically 'born of woman'. He kills Macbeth in battle, fulfilling the witches' prophecy.",
+    metadata: {
+      source: "Macbeth",
+      act: "5",
+      scene: "8",
+      character: "Plot Summary",
+      theme: "Prophecy",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "The major themes in Macbeth include ambition, power, fate, supernatural, violence, guilt, and appearance versus reality. Shakespeare explores how unchecked ambition and the desire for power can corrupt individuals and lead to their downfall.",
+    metadata: {
+      source: "Macbeth",
+      act: "General",
+      scene: "General",
+      character: "Analysis",
+      theme: "Themes",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Macbeth was likely written around 1606 during the reign of King James I, who was interested in witchcraft. The play is loosely based on historical events from Scottish history, particularly the reign of King Macbeth of Scotland in the 11th century.",
+    metadata: {
+      source: "Macbeth",
+      act: "Historical Context",
+      scene: "General",
+      character: "Background",
+      theme: "History",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "Lady Macbeth is one of Shakespeare's most famous female characters. She begins as strong, ambitious, and manipulative, pushing her husband to commit murder. However, she gradually descends into madness from guilt, ultimately taking her own life.",
+    metadata: {
+      source: "Macbeth",
+      act: "Character Analysis",
+      scene: "General",
+      character: "Lady Macbeth",
+      theme: "Character Development",
+    },
+  },
+  {
+    id: nanoid(),
+    text: "The play explores the psychological effects of guilt through both Macbeth and Lady Macbeth. While Macbeth sees hallucinations like floating daggers and Banquo's ghost, Lady Macbeth's guilt manifests in her sleepwalking and obsessive hand-washing.",
+    metadata: {
+      source: "Macbeth",
+      act: "Analysis",
+      scene: "General",
+      character: "Multiple",
+      theme: "Psychology",
+    },
+  },
+];
+
+// Function to get sample Macbeth data
+export function getMacbethSeedData(): VectorDocument[] {
+  return macbethData;
+}// app/lib/embedding-utils.ts
+import togetherClient from "./together-client";
+// Import getIndex AND the specific metadata type definition from pinecone-client
+import { getIndex, PineconeDocumentMetadata } from "./pinecone-client";
+import { nanoid } from "nanoid"; // Assuming nanoid is used for seeding IDs
+
+// Ensure the embedding model's dimension matches the Pinecone index dimension (e.g., 1536)
+const EMBEDDING_MODEL = "togethercomputer/m2-bert-80M-8k-retrieval"; // Ensure compatibility
+
+/**
+ * Generate single embedding for a text string (used for queries)
+ */
+export async function generateEmbedding(text: string): Promise<number[]> {
+  if (!text) {
+    console.warn("generateEmbedding called with empty text.");
+    // Returning a zero vector might lead to poor search results. Consider throwing an error instead.
+    // throw new Error("Cannot generate embedding for empty text.");
+    return Array(1024).fill(0); // Example: return zero vector matching dimension
+  }
+  try {
+    console.log(`Generating embedding for query text (length: ${text.length}) using ${EMBEDDING_MODEL}...`);
+    // Replace newlines as they can sometimes affect embedding quality
+    const cleanedText = text.replace(/\n/g, " ");
+    const response = await togetherClient.embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: cleanedText,
+    });
+
+    // Validate the response structure
+    if (!response?.data?.[0]?.embedding) {
+      throw new Error("Invalid response structure from Together.ai embedding API");
+    }
+    if (response.data[0].embedding.length !== 768) {
+       console.warn(`Warning: Embedding dimension mismatch. Expected 1536, got ${response.data[0].embedding.length}. Ensure EMBEDDING_MODEL is correct.`);
+       // Consider throwing an error if dimension mismatch is critical
+    }
+
+    console.log("Query embedding generated successfully.");
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error("Error generating query embedding:", error);
+    throw error; // Re-throw to be handled by the caller (e.g., chat route)
+  }
+}
+
+
+// --- Seeding / Generic Document Interface ---
+// Interface for documents before they are processed for Pinecone storage
+export interface VectorDocument {
+  id?: string; // Allow ID to be optional, generate if missing
+  text: string; // The main content
+  metadata?: {
+    source?: string; // Example source identifier
+    pageNumber?: number; // Number before conversion
+    chunkIndex?: number; // Number before conversion
+    // Allow other arbitrary key-value pairs
+    [key: string]: string | number | boolean | undefined;
+  };
+}
+
+
+/**
+ * Store single document (like seed data) in Pinecone - CORRECTED
+ * Converts VectorDocument to the format expected by Pinecone (PineconeDocumentMetadata).
+ */
+export async function storeDocument(doc: VectorDocument): Promise<void> {
+  // Ensure doc has an ID, generate if missing
+  const docId = doc.id || nanoid();
+  if (!doc.text) {
+      console.warn(`Skipping document ${docId} because its text content is empty.`);
+      return;
+  }
+
+  try {
+    // 1. Generate embedding for the document's text
+    const embedding = await generateEmbedding(doc.text);
+
+    // 2. Get Pinecone index handle (typed with PineconeDocumentMetadata)
+    const index = await getIndex(); // Uses the robust getIndex from pinecone-client
+
+    // 3. Prepare metadata according to PineconeDocumentMetadata structure
+    const metadataForPinecone: PineconeDocumentMetadata = {
+      // Required fields from PineconeDocumentMetadata:
+      content: doc.text, // Store the main text under the 'content' key
+      fileName: doc.metadata?.source || `doc_${docId}`, // Map 'source' to 'fileName', provide fallback
+      chunkIndex: (typeof doc.metadata?.chunkIndex === 'number' ? doc.metadata.chunkIndex.toString() : "0"), // Convert number to string, default to "0" if missing/invalid
+
+      // Optional fields from PineconeDocumentMetadata:
+      pageNumber: doc.metadata?.pageNumber?.toString(), // Convert number? to string | undefined
+      uploadedAt: new Date().toISOString(), // Add timestamp during storage
+
+      // Note: If VectorDocument.metadata has other fields NOT defined in
+      // PineconeDocumentMetadata, they won't be included here unless you explicitly add them.
+      // Pinecone allows arbitrary metadata, but defining the type is safer.
+      // Example: If you had `theme: 'xyz'` in doc.metadata, it wouldn't be stored
+      // unless PineconeDocumentMetadata included `theme?: string;`
+    };
+
+    // 4. Upsert the record into Pinecone
+    await index.upsert([{
+      id: docId,
+      values: embedding,
+      metadata: metadataForPinecone, // Use the correctly formatted metadata object
+    }]);
+
+    console.log(`Stored document: ${docId}`);
+  } catch (error) {
+    console.error(`Error storing document ${docId}:`, error);
+    throw error; // Re-throw error to be handled by the caller (like storeDocuments)
+  }
+}
+
+
+/**
+ * Store multiple documents in Pinecone in batches - CORRECTED
+ * Calls the corrected storeDocument function for each document.
+ */
+export async function storeDocuments(docs: VectorDocument[]): Promise<void> {
+  // Consider using the main `insertVectors` from pinecone-client for potentially better performance
+  // by batching embedding generation and upserts, but this works by calling storeDocument individually.
+  console.log(`Attempting to store ${docs.length} documents...`);
+  const batchSize = 10; // Process in chunks for logging/potential parallelization
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (let i = 0; i < docs.length; i += batchSize) {
+    const batch = docs.slice(i, i + batchSize);
+    console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(docs.length / batchSize)} (size: ${batch.length})`);
+
+    // Process documents in the current batch, potentially in parallel
+    const results = await Promise.allSettled(batch.map(doc => storeDocument(doc)));
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        successCount++;
+      } else {
+        failureCount++;
+        // Log the error for the specific document that failed in the batch
+        console.error(`Error storing document (ID: ${batch[index].id || 'N/A'}, Text Start: ${batch[index].text?.substring(0, 30)}...):`, result.reason);
+      }
+    });
+  }
+
+  console.log(`Finished storing documents. Success: ${successCount}, Failed: ${failureCount}`);
+  if (failureCount > 0) {
+      // Optionally throw an error if any document failed
+      // throw new Error(`${failureCount} documents failed to store.`);
+  }
+}
+
+
+/**
+ * Query Pinecone for similar documents - CORRECTED
+ * Retrieves documents and maps them back to the VectorDocument format.
+ */
+export async function querySimilarDocuments(query: string, limit: number = 5): Promise<VectorDocument[]> {
+  console.log(`Querying for documents similar to: "${query.substring(0, 50)}..." (limit: ${limit})`);
+  if (!query) {
+      console.warn("querySimilarDocuments called with empty query.");
+      return [];
+  }
+
+  try {
+    // 1. Generate embedding for the query
+    const embedding = await generateEmbedding(query);
+
+    // 2. Get Pinecone index handle (typed with PineconeDocumentMetadata)
+    const index = await getIndex();
+
+    // 3. Perform the query
+    const queryResponse = await index.query({
+      vector: embedding,
+      topK: limit,
+      includeMetadata: true, // Required to get metadata back
+    });
+    console.log(`Pinecone query returned ${queryResponse.matches?.length ?? 0} matches.`);
+
+    // 4. Map results back to the VectorDocument format
+    const results: VectorDocument[] = [];
+    if (queryResponse.matches) {
+      for (const match of queryResponse.matches) {
+        // Assert the type of the retrieved metadata
+        const metadataFromPinecone = match.metadata as PineconeDocumentMetadata | undefined;
+
+        // Validate essential 'content' field retrieved from metadata
+        if (!metadataFromPinecone || typeof metadataFromPinecone.content !== 'string') {
+          console.warn(`Skipping match ${match.id} due to missing or invalid 'content' in metadata. Received:`, metadataFromPinecone);
+          continue;
+        }
+
+        // Safely parse numbers back from strings
+        const chunkIdxStr = metadataFromPinecone.chunkIndex; // Should be a string
+        const pageNumStr = metadataFromPinecone.pageNumber; // String or undefined
+
+        const chunkIndex = parseInt(chunkIdxStr, 10);
+        let pageNumber: number | undefined = undefined;
+        if (typeof pageNumStr === 'string') {
+            const parsedPage = parseInt(pageNumStr, 10);
+            if (!isNaN(parsedPage)) pageNumber = parsedPage;
+        }
+
+        // Check for parsing errors
+        if (isNaN(chunkIndex)) {
+            console.warn(`Match ${match.id}: Invalid chunkIndex found in metadata: '${chunkIdxStr}'. Skipping.`);
+            continue;
+        }
+
+        // Reconstruct the VectorDocument
+        const doc: VectorDocument = {
+          id: match.id,
+          text: metadataFromPinecone.content, // Assign 'content' back to 'text'
+          metadata: {
+            // Map known fields back
+            source: metadataFromPinecone.fileName, // Map 'fileName' back to 'source'
+            pageNumber: pageNumber,
+            chunkIndex: chunkIndex,
+
+            // Include other metadata fields if they exist and are needed, converting types if necessary
+            // Example: If 'uploadedAt' was stored and needed:
+            // uploadedAt: metadataFromPinecone.uploadedAt ? new Date(metadataFromPinecone.uploadedAt) : undefined,
+
+            // Careful about spreading directly if keys conflict or types differ
+            // ...(metadataFromPinecone)
+          },
+          // Optionally add score to the result if needed by the caller
+          // score: match.score
+        };
+        results.push(doc);
+      }
+    }
+    console.log(`Returning ${results.length} mapped VectorDocument results.`);
+    return results;
+
+  } catch (error) {
+    console.error("Error querying similar documents:", error);
+    // Return empty array on error to prevent crashing the caller (e.g., chat route)
+    return [];
+  }
+}
+
+
+/**
+ * Format retrieved context into a prompt-friendly format - UNCHANGED
+ * Uses the VectorDocument format returned by querySimilarDocuments.
+ */
+export function formatRetrievedContext(docs: VectorDocument[]): string {
+  if (!docs || docs.length === 0) return "";
+
+  const formattedDocs = docs.map(doc => {
+    const source = doc.metadata?.source
+      ? `Source: ${doc.metadata.source}`
+      : "";
+
+    // Access chunkIndex/pageNumber which should now be numbers
+    const chunkInfo = `Chunk: ${doc.metadata?.chunkIndex ?? 'N/A'}`;
+    const pageInfo = doc.metadata?.pageNumber !== undefined
+      ? `Page: ${doc.metadata.pageNumber}`
+      : "";
+
+    // Example: Include act/scene if they exist in metadata
+    const location = doc.metadata?.act && doc.metadata?.scene
+      ? `Location: Act ${doc.metadata.act}, Scene ${doc.metadata.scene}`
+      : "";
+
+    const character = doc.metadata?.character
+      ? `Character: ${doc.metadata.character}`
+      : "";
+
+    // Construct metadata string - adjust fields as needed
+    const metadataString = [source, pageInfo, chunkInfo, location, character]
+      .filter(item => item !== "") // Remove empty parts
+      .join(" | ");
+
+    // Return formatted string with metadata header and text content
+    return `${metadataString ? `[${metadataString}]\n` : ""}${doc.text}`;
+  });
+
+  // Combine formatted documents into a single string for the prompt
+  return `
+--- Relevant Context Start ---
+${formattedDocs.join("\n\n---\n\n")}
+--- Relevant Context End ---
+`;
+}// app/lib/embeddings.ts
+import { FileChunk } from '@/app/types';
+import { PineconeRecord } from '@pinecone-database/pinecone';
+// Import the specific metadata type expected by insertVectors
+import { PineconeDocumentMetadata } from './pinecone-client';
+
+// For embeddings, you'll need to use an embedding model
+// OpenAI's embedding API is common, but you can use any embedding service
+
+// Placeholder/Mock function - Replace with your actual embedding logic
+export async function generateEmbeddings(
+  chunks: FileChunk[]
+): Promise<PineconeRecord<PineconeDocumentMetadata>[]> {
+  console.log(`Generating embeddings for ${chunks.length} chunks...`);
+
+  // In a real implementation, call your embedding API here (e.g., OpenAI, Together.ai)
+  // const embeddings = await callEmbeddingApi(chunks.map(c => c.content));
+
+  // Mock implementation: Generate random vectors and format metadata correctly
+  // CORRECTED: Removed unused 'index' parameter from map callback
+  const vectors: PineconeRecord<PineconeDocumentMetadata>[] = chunks.map((chunk) => {
+    // const actualEmbedding = embeddings[index]; // Use the real embedding here if not using mock
+
+    // --- Metadata Formatting ---
+    // Convert numbers from FileChunk metadata to strings for PineconeDocumentMetadata
+    const metadataForPinecone: PineconeDocumentMetadata = {
+      fileName: chunk.metadata.fileName,
+      pageNumber: chunk.metadata.pageNumber?.toString(), // Convert number? to string | undefined
+      chunkIndex: chunk.metadata.chunkIndex.toString(), // Convert number to string
+      content: chunk.content,
+      uploadedAt: new Date().toISOString(), // Add upload timestamp if desired
+    };
+
+    return {
+      id: chunk.id, // Use the chunk ID generated earlier
+      // values: actualEmbedding, // Use the real embedding vector
+      // --- MOCK VALUES --- Dimension set to 1024 ---
+      values: Array(768).fill(0).map(() => Math.random() - 0.5), // MOCK VALUES (768d)
+      // --- END MOCK VALUES ---
+      metadata: metadataForPinecone,
+    };
+  });
+
+  console.log(`Finished generating ${vectors.length} embedding records.`);
+  return vectors;
+}
+
+// Example using OpenAI (ensure you have the 'openai' package installed)
+/*
+import OpenAI from 'openai';
+
+const openai = new OpenAI({ // Configure API key via environment variables
+  apiKey: process.env.OPENAI_API_KEY,
+});
+// Choose a model that supports configurable dimensions if needed
+const embeddingModel = "text-embedding-3-small"; // Example model
+// Set desired dimension (MUST match Pinecone index dimension)
+const embeddingDimension = 1024;
+
+export async function generateEmbeddingsWithOpenAI(
+  chunks: FileChunk[]
+): Promise<PineconeRecord<PineconeDocumentMetadata>[]> {
+  if (!chunks || chunks.length === 0) {
+    return [];
+  }
+  console.log(`Generating OpenAI embeddings for ${chunks.length} chunks using ${embeddingModel} (dim: ${embeddingDimension})...`);
+
+  const textsToEmbed = chunks.map(chunk => chunk.content.replace(/\n/g, " ")); // Clean text slightly
+
+  try {
+    // Process in batches if necessary (OpenAI has input limits)
+    const batchSize = 100; // Example batch size, check OpenAI limits
+    const allVectors: PineconeRecord<PineconeDocumentMetadata>[] = [];
+
+    for (let i = 0; i < chunks.length; i += batchSize) {
+        const batchChunks = chunks.slice(i, i + batchSize);
+        const batchTexts = textsToEmbed.slice(i, i + batchSize);
+        console.log(`Processing OpenAI batch ${Math.floor(i/batchSize)+1}, size: ${batchTexts.length}`);
+
+        const response = await openai.embeddings.create({
+          model: embeddingModel,
+          input: batchTexts,
+          dimensions: embeddingDimension // Specify the desired dimension
+        });
+
+        if (response.data.length !== batchTexts.length) {
+          throw new Error(`OpenAI embedding response length mismatch in batch: expected ${batchTexts.length}, got ${response.data.length}`);
+        }
+
+        // CORRECTED: Removed unused 'index' parameter from map callback
+        const batchVectors = batchChunks.map((chunk) => {
+            const metadataForPinecone: PineconeDocumentMetadata = {
+                fileName: chunk.metadata.fileName,
+                pageNumber: chunk.metadata.pageNumber?.toString(),
+                chunkIndex: chunk.metadata.chunkIndex.toString(),
+                content: chunk.content, // Store original chunk content
+                uploadedAt: new Date().toISOString(),
+            };
+            // Find the corresponding embedding using the original index 'i' + inner index 'idx' or by matching content/ID if needed.
+            // Assuming the response order matches the input batch order:
+            const embeddingIndexInResponse = batchChunks.indexOf(chunk); // Find index within the current batch
+
+            if (embeddingIndexInResponse === -1) {
+                // This should not happen if response matches request length, but good to check
+                throw new Error(`Could not find chunk in OpenAI response batch for chunk ID ${chunk.id}`);
+            }
+
+
+            return {
+                id: chunk.id,
+                values: response.data[embeddingIndexInResponse].embedding,
+                metadata: metadataForPinecone,
+            };
+        });
+        allVectors.push(...batchVectors);
+    } // End batch loop
+
+    console.log(`Finished generating ${allVectors.length} OpenAI embedding records.`);
+    return allVectors;
+
+  } catch (error) {
+    console.error("Error generating OpenAI embeddings:", error);
+    throw error;
+  }
+}
+*/import { VectorDocument } from './embedding-utils';
+import { nanoid } from 'nanoid';
+
+/**
+ * Function to split text into chunks of manageable size
+ * @param text Full text to be split
+ * @param maxChunkSize Maximum characters per chunk
+ * @param overlap Number of characters to overlap between chunks
+ */
+export function splitTextIntoChunks(
+  text: string, 
+  maxChunkSize: number = 1000, 
+  overlap: number = 200
+): string[] {
+  // If text is already small enough, return as is
+  if (!text || text.length <= maxChunkSize) {
+    return text ? [text] : [];
+  }
+  
+  const chunks: string[] = [];
+  let startIndex = 0;
+  
+  while (startIndex < text.length) {
+    // Calculate end index for current chunk
+    let endIndex = Math.min(startIndex + maxChunkSize, text.length);
+    
+    // Adjust to avoid cutting words in the middle
+    if (endIndex < text.length) {
+      // Find the last space or newline in the current chunk
+      const lastSpace = text.lastIndexOf(' ', endIndex);
+      const lastNewline = text.lastIndexOf('\n', endIndex);
+      
+      // Use the closer one to the end
+      const breakPoint = Math.max(lastSpace, lastNewline);
+      
+      // If no space or newline found, use the original endpoint
+      if (breakPoint > startIndex) {
+        endIndex = breakPoint;
+      }
+    }
+    
+    // Extract chunk
+    const chunk = text.substring(startIndex, endIndex).trim();
+    if (chunk) {
+      chunks.push(chunk);
+    }
+    
+    // Set next start index with overlap
+    startIndex = Math.max(endIndex - overlap, startIndex + 1);
+    
+    // Safety check - if we're not making progress, exit the loop
+    if (startIndex >= text.length) {
+      break;
+    }
+  }
+  
+  return chunks;
+}
+
+/**
+ * Create vector documents from text chunks
+ */
+export function createVectorDocuments(
+  chunks: string[],
+  metadata: {
+    title: string;
+    source: string;
+    type: string;
+    [key: string]: string | number | boolean | undefined;
+  }
+): VectorDocument[] {
+  return chunks.map((chunk, index) => ({
+    id: nanoid(),
+    text: chunk,
+    metadata: {
+      ...metadata,
+      chunkIndex: index,
+      totalChunks: chunks.length,
+    },
+  }));
+}
+
+/**
+ * Extract text content from a file
+ * Basic implementation for .txt files
+ * In a production environment, add support for PDF, DOCX, etc.
+ */
+export async function extractTextFromFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        resolve(event.target.result as string);
+      } else {
+        reject(new Error('Failed to read file content'));
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Error reading file'));
+    };
+    
+    // Read as text for now
+    // For PDFs and DOCX, you'd need specialized libraries
+    reader.readAsText(file);
+  });
+}import { NextResponse } from 'next/server';
+import { seedPinecone } from '@/app/lib/seed-pinecone';
+
+export async function POST(req: Request) {
+  try {
+    // Check for authorization (optional)
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const result = await seedPinecone();
+    
+    if (result.success) {
+      return NextResponse.json(
+        { message: `Successfully seeded Pinecone with ${result.count} documents` },
+        { status: 200 }
+      );
+    } else {
+      return NextResponse.json(
+        { error: 'Failed to seed Pinecone', details: result.error },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error('Error in seed API route:', error);
+    return NextResponse.json(
+      { error: 'Failed to seed Pinecone database' },
+      { status: 500 }
+    );
+  }
+}import { getMacbethSeedData } from './seed-data';
+import { storeDocuments } from './embedding-utils';
+
+/**
+ * Seeds the Pinecone vector database with Macbeth data
+ */
+export async function seedPinecone() {
+  console.log('Starting to seed Pinecone with Macbeth data...');
+  
+  try {
+    const macbethData = getMacbethSeedData();
+    console.log(`Retrieved ${macbethData.length} documents to seed`);
+    
+    await storeDocuments(macbethData);
+    
+    console.log('Successfully seeded Pinecone with Macbeth data');
+    return { success: true, count: macbethData.length };
+  } catch (error) {
+    console.error('Failed to seed Pinecone:', error);
+    return { success: false, error };
+  }
+}
+
+// If this file is executed directly (not imported)
+if (require.main === module) {
+  (async () => {
+    try {
+      const result = await seedPinecone();
+      console.log('Seeding result:', result);
+      process.exit(0);
+    } catch (error) {
+      console.error('Error in seeding script:', error);
+      process.exit(1);
+    }
+  })();
+}import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
+
+/**
+ * Write file to temporary directory
+ */
+export async function writeFileToTemp(
+  buffer: ArrayBuffer, 
+  filename: string
+): Promise<string> {
+  // Create a temporary directory
+  const tempDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'macbot-upload-')
+  );
+  
+  // Create file path
+  const filePath = path.join(tempDir, filename);
+  
+  // Write the file
+  await fs.writeFile(
+    filePath, 
+    Buffer.from(buffer)
+  );
+  
+  return filePath;
+}
+
+/**
+ * Clean up temporary file
+ */
+export async function cleanupTempFile(filePath: string): Promise<void> {
+  try {
+    // Check if the file exists
+    await fs.access(filePath);
+    
+    // Delete the file
+    await fs.unlink(filePath);
+    
+    // Try to remove the directory
+    const dirPath = path.dirname(filePath);
+    await fs.rmdir(dirPath);
+  } catch (error) {
+    console.error('Error cleaning up temp file:', error);
+    // Continue even if cleanup fails
+  }
+}
+
+/**
+ * Parse text file
+ */
+export async function parseTextFile(filePath: string): Promise<string> {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    console.error('Error parsing text file:', error);
+    throw new Error('Failed to parse text file');
+  }
+}
+
+/**
+ * Detect file type from extension and parse accordingly
+ */
+export async function parseFile(
+  buffer: ArrayBuffer,
+  filename: string
+): Promise<string> {
+  // Get file extension
+  const ext = path.extname(filename).toLowerCase();
+  
+  // Write to temp file
+  const filePath = await writeFileToTemp(buffer, filename);
+  
+  try {
+    // Process based on file type
+    if (ext === '.txt') {
+      return await parseTextFile(filePath);
+    } else {
+      // For now, only support .txt
+      // In a full implementation, add support for .pdf, .docx, etc.
+      throw new Error(`Unsupported file type: ${ext}`);
+    }
+  } finally {
+    // Clean up temp file
+    await cleanupTempFile(filePath);
+  }
+}import { NextResponse } from 'next/server';
+import { seedPinecone } from '@/app/lib/seed-pinecone';
+
+export async function POST(req: Request) {
+  try {
+    // Check for authorization
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Log essential environment variables (but not the actual values)
+    console.log('Environment check:', {
+      TOGETHER_API_KEY: !!process.env.TOGETHER_API_KEY,
+      PINECONE_API_KEY: !!process.env.PINECONE_API_KEY,
+      PINECONE_INDEX: process.env.PINECONE_INDEX,
+      ADMIN_API_KEY: !!process.env.ADMIN_API_KEY,
+    });
+    
+    const result = await seedPinecone();
+    
+    if (result.success) {
+      return NextResponse.json(
+        { message: `Successfully seeded Pinecone with ${result.count} documents` },
+        { status: 200 }
+      );
+    } else {
+      console.error('Seeding error details:', result.error);
+      return NextResponse.json(
+        { error: 'Failed to seed Pinecone', details: JSON.stringify(result.error) },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error('Detailed error in seed API route:', error);
+    return NextResponse.json(
+      { error: 'Failed to seed Pinecone database', details: JSON.stringify(error) },
+      { status: 500 }
+    );
+  }
+}// app/api/chat/route.ts
+import { NextResponse } from 'next/server';
+import togetherClient, { modelName } from '@/app/lib/together-client';
+// REMOVE generateEmbeddings if only used for query, otherwise keep if needed elsewhere
+// import { generateEmbeddings } from '@/app/lib/embeddings';
+// Import the function needed for querying
+import { querySimilarChunks } from '@/app/lib/pinecone-client';
+// Import embedding generation specifically needed for the query
+import { generateEmbedding } from '@/app/lib/embedding-utils'; // <-- Use this for single query embedding
+
+// Define types locally for the API route
+type MessageRole = 'user' | 'assistant' | 'system';
+
+// export const runtime = 'edge'; // <--- REMOVE OR COMMENT OUT THIS LINE
+
+export async function POST(req: Request) {
+  try {
+    const { messages, useUploadedFiles } = await req.json();
+
+    console.log("API route called with messages:", messages);
+
+    let contextFromFiles = '';
+
+    if (useUploadedFiles) {
+      const userMessages = messages.filter((msg: { role: MessageRole }) => msg.role === 'user');
+      if (userMessages.length > 0) {
+        const latestUserMessage = userMessages[userMessages.length - 1];
+
+        console.log("Generating embedding for user query:", latestUserMessage.content);
+        // Generate an embedding for the single user query using the correct function
+        const queryEmbeddingVector = await generateEmbedding(latestUserMessage.content);
+        console.log("Embedding generated.");
+
+
+        // Check if we have the embedding vector
+        if (queryEmbeddingVector && queryEmbeddingVector.length > 0) {
+          console.log("Querying Pinecone for similar chunks...");
+          // Search for similar chunks using the vector
+          const similarChunks = await querySimilarChunks(
+            queryEmbeddingVector, // Pass the vector directly
+            3 // Get top 3 most relevant chunks
+          );
+          console.log(`Found ${similarChunks.length} similar chunks.`);
+
+          // Format the context from retrieved chunks
+          if (similarChunks && similarChunks.length > 0) {
+            contextFromFiles = `
+              \n\n--- Relevant Context from Uploaded Documents ---\n
+              ${similarChunks.map(chunk =>
+              `Source: ${chunk.metadata.fileName}\nContent: ${chunk.content}\n---`
+            ).join('\n')}
+              \n--- End Context ---\n\n
+            `;
+            console.log("Context from files prepared.");
+          } else {
+            console.log("No relevant chunks found in Pinecone for the query.");
+          }
+        } else {
+          console.log("Failed to generate query embedding.");
+        }
+      }
+    }
+
+    // Format messages for Together.ai
+    const formattedMessages = messages.map((msg: { role: MessageRole; content: string }) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    // If we have context from files, add it to the system message or latest user message
+    // Adding context near the user's latest query can sometimes be more effective
+    if (contextFromFiles) {
+       // Find the last user message index
+      const lastUserMessageIndex = formattedMessages.findLastIndex((msg: {role: MessageRole}) => msg.role === 'user');
+      if (lastUserMessageIndex !== -1) {
+          formattedMessages[lastUserMessageIndex].content += contextFromFiles;
+          console.log("Added context to the last user message.");
+      } else {
+          // Fallback: Add to system message if no user message exists (unlikely in a chat)
+          const systemMessageIndex = formattedMessages.findIndex((msg: { role: MessageRole }) => msg.role === 'system');
+          if (systemMessageIndex >= 0) {
+              formattedMessages[systemMessageIndex].content += contextFromFiles;
+              console.log("Added context to the system message (fallback).");
+          } else {
+              // Fallback: Prepend a new system message with context (least ideal)
+              formattedMessages.unshift({ role: 'system', content: contextFromFiles });
+              console.log("Prepended context as a new system message (fallback).");
+          }
+      }
+    }
+
+    console.log("Sending request to Together.ai model:", modelName);
+    // Initialize streaming response from Together.ai
+    const response = await togetherClient.chat.completions.create({
+      messages: formattedMessages,
+      model: modelName,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+    console.log("Received stream response from Together.ai.");
+
+    // Convert the stream to a readable stream
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+
+        try {
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+        } catch (error) {
+          console.error("Streaming error:", error);
+          controller.error(error);
+        } finally {
+          console.log("Stream finished.");
+          controller.close();
+        }
+      },
+    });
+
+    // Return streaming response
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  } catch (error) {
+    console.error('Error in chat API route:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate response' },
+      { status: 500 }
+    );
+  }
+}// app/api/documents/route.ts
+import { NextResponse } from 'next/server';
+import { getIndex } from '@/app/lib/pinecone-client';
+
+export async function GET(req: Request) {
+  try {
+    // Get the URL params
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    
+    // Get Pinecone index
+    const index = await getIndex();
+    
+    // Get index stats to determine dimension
+    const stats = await index.describeIndexStats();
+    
+    // Create a dummy vector query to fetch documents
+    const dummyVector = Array(stats.dimension).fill(0);
+    
+    // Fetch document metadata using a query
+    const response = await index.query({ 
+      vector: dummyVector,
+      topK: limit,
+      includeMetadata: true
+    });
+    
+    // Extract document information from matches
+    const documents = response.matches.map(match => ({
+      id: match.id,
+      fileName: match.metadata?.fileName,
+      uploadedAt: match.metadata?.uploadedAt,
+    }));
+    
+    // Group documents by file name
+    const groupedDocuments: Record<string, { 
+      fileName: string; 
+      uploadedAt?: string;
+      chunks: number;
+    }> = {};
+    
+    documents.forEach(doc => {
+      if (doc.fileName) {
+        const fileName = doc.fileName as string;
+        if (!groupedDocuments[fileName]) {
+          groupedDocuments[fileName] = {
+            fileName: fileName,
+            uploadedAt: doc.uploadedAt as string | undefined,
+            chunks: 0
+          };
+        }
+        groupedDocuments[fileName].chunks++;
+      }
+    });
+    
+    return NextResponse.json({
+      documents: Object.values(groupedDocuments)
+    });
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch documents' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    // Get the request body
+    const { fileName } = await req.json();
+    
+    if (!fileName) {
+      return NextResponse.json(
+        { error: 'File name is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Get Pinecone index
+    const index = await getIndex();
+    
+    // Get index dimension for query
+    const stats = await index.describeIndexStats();
+    const dummyVector = Array(stats.dimension).fill(0);
+    
+    // Query vectors by fileName to get IDs
+    const queryResponse = await index.query({
+      vector: dummyVector,
+      topK: 1000,
+      includeMetadata: true,
+      filter: {
+        fileName: { $eq: fileName }
+      }
+    });
+    
+    // Get IDs to delete
+    const idsToDelete = queryResponse.matches.map(match => match.id);
+    
+    if (idsToDelete.length > 0) {
+      // Delete vectors in batches
+      const batchSize = 100;
+      for (let i = 0; i < idsToDelete.length; i += batchSize) {
+        const batch = idsToDelete.slice(i, i + batchSize);
+        await index.deleteMany(batch);
+      }
+    }
+    
+    return NextResponse.json({
+      success: true,
+      deletedCount: idsToDelete.length,
+      fileName
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete document' },
+      { status: 500 }
+    );
+  }
+}// app/api/upload/route.ts
+import { NextResponse } from 'next/server';
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+import { nanoid } from 'nanoid';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Import embedding generation and Pinecone client
+// Ensure these imports point to the corrected files from previous steps
+import { generateEmbeddings } from '@/app/lib/embeddings';
+import { insertVectors } from '@/app/lib/pinecone-client';
+import { FileChunk } from '@/app/types';
+
+// Set up uploads directory (ensure permissions allow writing)
+const uploadsDir = path.join(process.cwd(), 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log(`Created uploads directory: ${uploadsDir}`);
+  }
+} catch (error) {
+    console.error(`FATAL: Failed to create or access uploads directory: ${uploadsDir}`, error);
+    // If the directory can't be created, uploads will likely fail.
+}
+
+
+export async function POST(req: Request) {
+  // --- Step 1: Log entry into the route ---
+  console.log('--- /api/upload endpoint hit ---');
+  try {
+    // --- Step 2: Log before reading formData ---
+    console.log('Attempting to read formData...');
+    const formData = await req.formData();
+    console.log('FormData read successfully.');
+
+    // --- Step 3: Log before getting files and check the key ---
+    const filesKey = 'files'; // The key used on the client-side formData.append('files', file)
+    console.log(`Attempting to get files using key: '${filesKey}'...`);
+    // Use getAll to handle multiple files with the same key
+    const files = formData.getAll(filesKey) as File[]; // Type assertion, assumes client sends File objects
+    // --- Step 4: Log how many files were found ---
+    console.log(`Received ${files?.length ?? 'undefined/null'} file(s) under key '${filesKey}'`);
+
+    // --- Step 5: Check if files array is valid ---
+    if (!files || files.length === 0) {
+      console.log(`Validation failed: No files found in formData for key '${filesKey}'. Returning 400.`);
+      // This is the most likely cause of the 400 Bad Request
+      return NextResponse.json(
+        { error: `No files uploaded under the key '${filesKey}'` },
+        { status: 400 }
+      );
+    }
+
+    // --- If files are found, proceed with processing ---
+    console.log(`Found ${files.length} file(s). Starting processing loop...`);
+    const fileNames: string[] = [];
+    const processedFilesInfo: Array<{ name: string; chunks: number }> = [];
+
+    for (const file of files) {
+      // Validate that the item is actually a File object (more robust check)
+      if (!(file instanceof File)) {
+          console.warn("Received an item in formData that is not a File object, skipping:", file);
+          continue;
+      }
+
+      const fileId = nanoid(10); // Short unique ID for this file processing instance
+      const originalFileName = file.name;
+      fileNames.push(originalFileName);
+      console.log(`Processing file: ${originalFileName} (size: ${file.size} bytes) with ID: ${fileId}`);
+
+      // --- Optional: Save raw file to disk ---
+      // Consider if this is necessary. If only processing content, maybe skip saving.
+      const tempFilePath = join(uploadsDir, `${fileId}-${originalFileName}`);
+      console.log(`Attempting to write temporary file to: ${tempFilePath}`);
+      try {
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          await writeFile(tempFilePath, buffer);
+          console.log(`Temporary file written successfully.`);
+      } catch (writeError) {
+          console.error(`Error writing temporary file ${tempFilePath}:`, writeError);
+          // Decide if this is a critical error or if processing can continue from buffer
+          // For now, we'll throw to indicate a problem saving the file if it's needed later
+          throw new Error(`Failed to write temporary file for ${originalFileName}`);
+      }
+
+
+      // --- Extract Text ---
+      // Important: Implement robust extraction for PDF/DOCX using libraries
+      let fileContent = '';
+      const fileExt = path.extname(originalFileName).toLowerCase();
+      console.log(`Extracting content for type: ${fileExt}`);
+      const buffer = Buffer.from(await file.arrayBuffer()); // Read buffer again if not saved or passed
+
+      if (fileExt === '.txt' || fileExt === '.md') {
+        fileContent = buffer.toString('utf-8');
+      } else if (fileExt === '.pdf') {
+        // TODO: integrate pdf-parse
+        console.warn("PDF parsing not implemented. Using placeholder content.");
+        fileContent = `Placeholder content for PDF: ${originalFileName}`;
+      } else if (fileExt === '.docx') {
+        // TODO: integrate mammoth
+        console.warn("DOCX parsing not implemented. Using placeholder content.");
+        fileContent = `Placeholder content for DOCX: ${originalFileName}`;
+      } else {
+          console.warn(`Unsupported file type '${fileExt}' for content extraction. Skipping content processing for ${originalFileName}.`);
+          // Skip embedding and insertion for unsupported types if content is required
+           continue;
+      }
+      console.log(`Content extracted/placeholder generated (length: ${fileContent?.length || 0})`);
+
+
+      // --- Split into Chunks ---
+      if (!fileContent) {
+          console.warn(`No content available for ${originalFileName}, skipping chunking and embedding.`);
+          continue;
+      }
+      const chunkSize = 1000; // Characters per chunk
+      const overlap = 200;   // Overlap between chunks
+      const fileChunks: FileChunk[] = [];
+      console.log(`Splitting into chunks (size: ${chunkSize}, overlap: ${overlap})...`);
+      for (let i = 0; i < fileContent.length; i += (chunkSize - overlap)) {
+        const chunkEnd = Math.min(i + chunkSize, fileContent.length);
+        const chunkContent = fileContent.slice(i, chunkEnd);
+        if (chunkContent.trim()) { // Only add non-empty chunks
+            fileChunks.push({
+              id: `${fileId}-chunk-${fileChunks.length}`, // Unique ID per chunk
+              fileId: fileId, // Link back to the file process
+              content: chunkContent,
+              metadata: {
+                fileName: originalFileName, // Original name for reference
+                chunkIndex: fileChunks.length, // 0-based index
+                pageNumber: undefined, // TODO: Add page number extraction if possible
+              },
+            });
+        }
+      }
+      console.log(`Generated ${fileChunks.length} chunks.`);
+
+      if (fileChunks.length === 0) {
+          console.warn(`No chunks generated for ${originalFileName}, skipping embedding.`);
+          continue;
+      }
+
+      // --- Generate Embeddings ---
+      // generateEmbeddings should handle converting metadata numbers to strings
+      const vectors = await generateEmbeddings(fileChunks); // Using mock or real implementation
+
+      // --- Upsert into Pinecone ---
+      if (vectors && vectors.length > 0) {
+        // insertVectors expects correctly formatted metadata (strings) from generateEmbeddings
+        await insertVectors(vectors);
+        processedFilesInfo.push({ name: originalFileName, chunks: fileChunks.length });
+      } else {
+          console.warn(`No vectors generated for ${originalFileName}.`);
+      }
+
+       // --- Optional: Cleanup temp file ---
+       try {
+           if (fs.existsSync(tempFilePath)) {
+             await fs.promises.unlink(tempFilePath);
+             console.log(`Cleaned up temporary file: ${tempFilePath}`);
+           }
+       } catch (cleanupError) {
+           console.error(`Error cleaning up temporary file ${tempFilePath}:`, cleanupError);
+           // Non-critical, log and continue
+       }
+
+    } // End of loop through files
+
+    console.log('--- /api/upload processing successful ---');
+    // Send back meaningful success response
+    return NextResponse.json({
+      success: true,
+      message: `${processedFilesInfo.length} file(s) processed successfully.`,
+      processedFiles: processedFilesInfo, // Contains name and chunk count for processed files
+      // fileNames: fileNames // Redundant if using processedFilesInfo
+    });
+
+  } catch (error: unknown) {
+    // --- Step 6: Log any caught errors ---
+    console.error('--- ERROR in /api/upload ---:', error);
+    // Determine if it's a known error type or generic
+    const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
+    // Return a 500 Internal Server Error for unexpected issues
+    return NextResponse.json(
+      { error: 'Failed to process upload due to a server error.', details: errorMessage },
+      { status: 500 }
+    );
+  }
+}'use client';
+
+import { useState } from 'react';
+import Chat from './components/Chat';
+import AdminPanel from './components/AdminPanel';
+import DocumentUploader from './components/DocumentUploader';
+import styled from 'styled-components';
+
+const ToggleButton = styled.button`
+  background: none;
+  border: none;
+  color: var(--gray-800);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 20px;
+  padding: 4px 8px;
+  
+  &:hover {
+    color: var(--primary);
+  }
+`;
+
+const AdminSection = styled.div`
+  margin-top: 20px;
+`;
+
+export default function Home() {
+  const [showAdmin, setShowAdmin] = useState(false);
+  
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-4 md:p-24">
+      <div className="w-full max-w-4xl">
+        <h1 className="text-4xl font-bold text-center mb-6">Macbot</h1>
+        <h2 className="text-xl text-center mb-10">Your AI Shakespeare Study Assistant</h2>
+        <Chat />
+        
+        <div className="flex justify-center">
+          <ToggleButton onClick={() => setShowAdmin(!showAdmin)}>
+            {showAdmin ? 'Hide Admin Panel' : 'Show Admin Panel'}
+          </ToggleButton>
+        </div>
+        
+        {showAdmin && (
+          <AdminSection>
+            <AdminPanel />
+            <DocumentUploader />
+          </AdminSection>
+        )}
+      </div>
+    </main>
+  );
+}:root {
+    --foreground: #000;
+    --background: #fff;
+    --primary: #0070f3;
+    --primary-hover: #0051a2;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-800: #1f2937;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --foreground: #fff;
+      --background: #121212;
+      --gray-100: #1f2937;
+      --gray-200: #374151;
+      --gray-300: #4b5563;
+      --gray-800: #e5e7eb;
+    }
+  }
+  
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+  
+  html,
+  body {
+    max-width: 100vw;
+    height: 100%;
+    overflow-x: hidden;
+  }
+  
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+  
+  a {
+    color: inherit;
+    text-decoration: none;
+  }

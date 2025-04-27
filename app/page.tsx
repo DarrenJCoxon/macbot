@@ -1,52 +1,53 @@
+// app/page.tsx
 'use client';
 
-import { useState } from 'react';
 import Chat from './components/Chat';
-import AdminPanel from './components/AdminPanel';
-import DocumentUploader from './components/DocumentUploader';
 import styled from 'styled-components';
+import Link from 'next/link'; // Import Link
 
-const ToggleButton = styled.button`
-  background: none;
-  border: none;
+// Styled component for the Admin Link
+const AdminLink = styled(Link)`
+  position: absolute; // Position relative to the parent div
+  top: 1rem;          // Adjust spacing from top
+  right: 1rem;         // Adjust spacing from right
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
   color: var(--gray-800);
-  font-size: 0.8rem;
-  text-decoration: underline;
-  cursor: pointer;
-  margin-top: 20px;
-  padding: 4px 8px;
-  
+  background-color: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+
   &:hover {
-    color: var(--primary);
+    background-color: var(--gray-200);
+    color: var(--foreground); // Ensure text color remains readable
+  }
+
+  // Adjust positioning for smaller screens if needed
+  @media (max-width: 600px) {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.4rem 0.8rem;
   }
 `;
 
-const AdminSection = styled.div`
-  margin-top: 20px;
-`;
 
 export default function Home() {
-  const [showAdmin, setShowAdmin] = useState(false);
-  
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-4 md:p-24">
-      <div className="w-full max-w-4xl">
+      {/* Make the main content container relatively positioned for the absolute link */}
+      <div className="w-full max-w-4xl relative"> {/* Added relative positioning */}
+        {/* Add the Admin Link */}
+        <AdminLink href="/admin">
+           Admin Panel
+        </AdminLink>
+
         <h1 className="text-4xl font-bold text-center mb-6">Macbot</h1>
         <h2 className="text-xl text-center mb-10">Your AI Shakespeare Study Assistant</h2>
+
         <Chat />
-        
-        <div className="flex justify-center">
-          <ToggleButton onClick={() => setShowAdmin(!showAdmin)}>
-            {showAdmin ? 'Hide Admin Panel' : 'Show Admin Panel'}
-          </ToggleButton>
-        </div>
-        
-        {showAdmin && (
-          <AdminSection>
-            <AdminPanel />
-            <DocumentUploader />
-          </AdminSection>
-        )}
+
       </div>
     </main>
   );
