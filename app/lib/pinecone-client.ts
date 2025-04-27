@@ -10,6 +10,15 @@ if (!pineconeApiKey) {
   console.error('Missing Pinecone API key');
 }
 
+// Define metadata type with proper typing
+type DocumentMetadata = {
+  fileName: string;
+  pageNumber?: string; // Changed to string for Pinecone compatibility
+  chunkIndex: string; // Changed to string for Pinecone compatibility
+  content: string;
+  uploadedAt?: string;
+};
+
 // Initialize Pinecone client
 const pinecone = new Pinecone({
   apiKey: pineconeApiKey,
@@ -21,19 +30,26 @@ export const getIndex = async () => {
     // Check if index exists
     const indexes = await pinecone.listIndexes();
     
-    const indexExists = indexes.some(index => index.name === pineconeIndex);
+    // Fix: Array.some() doesn't exist on IndexList type
+    let indexExists = false;
+    for (const idx of Object.values(indexes)) {
+      if (idx.name === pineconeIndex) {
+        indexExists = true;
+        break;
+      }
+    }
     
     if (!indexExists) {
       // Create index if it doesn't exist
       await pinecone.createIndex({
         name: pineconeIndex,
         dimension: 1536, // Appropriate for most embedding models
+        metric: 'cosine', // Moved from spec object to main options
         spec: {
           serverless: {
             cloud: 'aws',
             region: 'us-west-2'
-          },
-          metric: 'cosine'
+          }
         }
       });
       
@@ -50,20 +66,26 @@ export const getIndex = async () => {
 
 // Insert vectors into Pinecone
 export const insertVectors = async (
-  vectors: PineconeRecord<{ 
-    fileName: string; 
-    pageNumber?: number;
-    chunkIndex: number;
-    content: string;
-  }>[]
+  vectors: PineconeRecord<DocumentMetadata>[]
 ) => {
   try {
     const index = await getIndex();
     
+    // Convert number values to strings for Pinecone compatibility
+    const processedVectors = vectors.map(vector => ({
+      ...vector,
+      metadata: {
+        ...vector.metadata,
+        // Convert number to string for compatibility if it exists
+        pageNumber: vector.metadata?.pageNumber?.toString() ?? '',
+        chunkIndex: vector.metadata?.chunkIndex?.toString() ?? ''
+      }
+    }));
+    
     // Insert in batches of 100
     const batchSize = 100;
-    for (let i = 0; i < vectors.length; i += batchSize) {
-      const batch = vectors.slice(i, i + batchSize);
+    for (let i = 0; i < processedVectors.length; i += batchSize) {
+      const batch = processedVectors.slice(i, i + batchSize);
       await index.upsert(batch);
     }
     
@@ -94,8 +116,8 @@ export const querySimilarChunks = async (
       content: match.metadata?.content as string,
       metadata: {
         fileName: match.metadata?.fileName as string,
-        pageNumber: match.metadata?.pageNumber as number | undefined,
-        chunkIndex: match.metadata?.chunkIndex as number,
+        pageNumber: match.metadata?.pageNumber ? parseInt(match.metadata.pageNumber as string) : undefined,
+        chunkIndex: parseInt(match.metadata?.chunkIndex as string),
       },
     }));
   } catch (error) {

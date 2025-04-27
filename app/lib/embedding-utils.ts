@@ -1,5 +1,6 @@
+// app/lib/embedding-utils.ts
 import togetherClient from "./together-client";
-import { index } from "./pinecone-client";
+import { getIndex } from "./pinecone-client";
 
 // Embedding model that outputs embeddings compatible with your Pinecone index
 const EMBEDDING_MODEL = "togethercomputer/m2-bert-80M-8k-retrieval";
@@ -42,6 +43,7 @@ export interface VectorDocument {
 export async function storeDocument(doc: VectorDocument): Promise<void> {
   try {
     const embedding = await generateEmbedding(doc.text);
+    const index = await getIndex();
     
     await index.upsert([{
       id: doc.id,
@@ -95,6 +97,7 @@ export async function storeDocuments(docs: VectorDocument[]): Promise<void> {
 export async function querySimilarDocuments(query: string, limit: number = 5): Promise<VectorDocument[]> {
   try {
     const embedding = await generateEmbedding(query);
+    const index = await getIndex();
     
     const queryResponse = await index.query({
       vector: embedding,
@@ -102,11 +105,11 @@ export async function querySimilarDocuments(query: string, limit: number = 5): P
       includeMetadata: true,
     });
     
-    return queryResponse.matches.map(match => ({
+    return queryResponse.matches.map((match) => ({
       id: match.id,
       text: match.metadata?.text as string,
       metadata: {
-        ...match.metadata,
+        ...(match.metadata as Record<string, unknown>),
       },
     })) as VectorDocument[];
   } catch (error) {

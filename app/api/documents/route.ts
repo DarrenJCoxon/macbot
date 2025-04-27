@@ -1,6 +1,5 @@
 // app/api/documents/route.ts
 import { NextResponse } from 'next/server';
-import pineconeClient from '@/app/lib/pinecone-client';
 import { getIndex } from '@/app/lib/pinecone-client';
 
 export async function GET(req: Request) {
@@ -12,17 +11,24 @@ export async function GET(req: Request) {
     // Get Pinecone index
     const index = await getIndex();
     
-    // Fetch document metadata
-    const response = await index.fetch({ 
-      ids: [], 
-      limit 
+    // Get index stats to determine dimension
+    const stats = await index.describeIndexStats();
+    
+    // Create a dummy vector query to fetch documents
+    const dummyVector = Array(stats.dimension).fill(0);
+    
+    // Fetch document metadata using a query
+    const response = await index.query({ 
+      vector: dummyVector,
+      topK: limit,
+      includeMetadata: true
     });
     
-    // Extract document information from vectors
-    const documents = Object.entries(response.vectors || {}).map(([id, vector]) => ({
-      id,
-      fileName: vector.metadata?.fileName,
-      uploadedAt: vector.metadata?.uploadedAt,
+    // Extract document information from matches
+    const documents = response.matches.map(match => ({
+      id: match.id,
+      fileName: match.metadata?.fileName,
+      uploadedAt: match.metadata?.uploadedAt,
     }));
     
     // Group documents by file name
@@ -34,14 +40,15 @@ export async function GET(req: Request) {
     
     documents.forEach(doc => {
       if (doc.fileName) {
-        if (!groupedDocuments[doc.fileName]) {
-          groupedDocuments[doc.fileName] = {
-            fileName: doc.fileName,
+        const fileName = doc.fileName as string;
+        if (!groupedDocuments[fileName]) {
+          groupedDocuments[fileName] = {
+            fileName: fileName,
             uploadedAt: doc.uploadedAt as string | undefined,
             chunks: 0
           };
         }
-        groupedDocuments[doc.fileName].chunks++;
+        groupedDocuments[fileName].chunks++;
       }
     });
     
@@ -72,13 +79,18 @@ export async function DELETE(req: Request) {
     // Get Pinecone index
     const index = await getIndex();
     
+    // Get index dimension for query
+    const stats = await index.describeIndexStats();
+    const dummyVector = Array(stats.dimension).fill(0);
+    
     // Query vectors by fileName to get IDs
     const queryResponse = await index.query({
+      vector: dummyVector,
+      topK: 1000,
+      includeMetadata: true,
       filter: {
         fileName: { $eq: fileName }
-      },
-      topK: 1000,
-      includeMetadata: false,
+      }
     });
     
     // Get IDs to delete
