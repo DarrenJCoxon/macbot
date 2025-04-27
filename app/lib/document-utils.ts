@@ -66,7 +66,7 @@ export function createVectorDocuments(
     title: string;
     source: string;
     type: string;
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined;
   }
 ): VectorDocument[] {
   return chunks.map((chunk, index) => ({

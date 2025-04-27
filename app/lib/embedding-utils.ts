@@ -32,7 +32,7 @@ export interface VectorDocument {
     act?: string;
     scene?: string;
     character?: string;
-    [key: string]: unknown;
+    [key: string]: string | number | boolean | undefined;
   };
 }
 
