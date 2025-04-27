@@ -3,7 +3,8 @@ import { Message } from '@/app/types';
 import togetherClient, { modelName } from '@/app/lib/together-client';
 import { querySimilarDocuments, formatRetrievedContext } from '@/app/lib/embedding-utils';
 
-export const runtime = 'edge';
+// Change this from 'edge' to 'nodejs' to support Pinecone
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
     console.log("API route called with messages:", messages);
     
     // Extract the latest user message for context retrieval
-    const latestUserMessage = [...messages].reverse().find(msg => msg.role === 'user');
+    const latestUserMessage = [...messages].reverse().find((msg: Message) => msg.role === 'user');
     
     // Retrieve relevant context from Pinecone if there's a user message
     let contextPrompt = '';
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     // Format messages for Together.ai, adding the system message with context
     const formattedMessages = [
       systemMessage,
-      ...messages.filter(msg => msg.role !== 'system').map((msg: Message) => ({
+      ...messages.filter((msg: Message) => msg.role !== 'system').map((msg: Message) => ({
         role: msg.role,
         content: msg.content,
       }))
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
       max_tokens: 1000,
     });
     
-    // Convert the stream to a readable stream
+    // Create a ReadableStream for the response
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();

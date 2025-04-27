@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Chat from './components/Chat';
 import AdminPanel from './components/AdminPanel';
+import DocumentUploader from './components/DocumentUploader';
 import styled from 'styled-components';
 
 const ToggleButton = styled.button`
@@ -18,6 +19,10 @@ const ToggleButton = styled.button`
   &:hover {
     color: var(--primary);
   }
+`;
+
+const AdminSection = styled.div`
+  margin-top: 20px;
 `;
 
 export default function Home() {
@@ -36,7 +41,12 @@ export default function Home() {
           </ToggleButton>
         </div>
         
-        {showAdmin && <AdminPanel />}
+        {showAdmin && (
+          <AdminSection>
+            <AdminPanel />
+            <DocumentUploader />
+          </AdminSection>
+        )}
       </div>
     </main>
   );

@@ -1,8 +1,8 @@
 import togetherClient from "./together-client";
 import { index } from "./pinecone-client";
 
-// Embedding model that outputs 1024-dimensional vectors to match your Pinecone index
-const EMBEDDING_MODEL = "together-embed";
+// Embedding model that outputs embeddings compatible with your Pinecone index
+const EMBEDDING_MODEL = "togethercomputer/m2-bert-80M-8k-retrieval";
 
 /**
  * Generate embeddings for text using Together.ai
@@ -32,7 +32,7 @@ export interface VectorDocument {
     act?: string;
     scene?: string;
     character?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -54,7 +54,7 @@ export async function storeDocument(doc: VectorDocument): Promise<void> {
     
     console.log(`Stored document: ${doc.id}`);
   } catch (error) {
-    console.error("Error storing document:", error);
+    console.error(`Error storing document ${doc.id}:`, error);
     throw error;
   }
 }
@@ -79,7 +79,7 @@ export async function storeDocuments(docs: VectorDocument[]): Promise<void> {
         }
       }));
       
-      console.log(`Processed batch ${i / batchSize + 1} of ${Math.ceil(docs.length / batchSize)}`);
+      console.log(`Processed batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(docs.length / batchSize)}`);
     }
     
     console.log(`Finished processing ${docs.length} documents`);
