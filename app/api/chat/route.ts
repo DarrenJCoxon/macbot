@@ -26,57 +26,55 @@ export async function POST(req: Request) {
     let retrievedContextText = ''; // Variable to store formatted context
     let retrievedChunks: VectorSearchResult[] = []; // Store retrieved chunks for inspection
 
-    // --- RAG Process: Retrieve Context ---
-    if (useUploadedFiles) {
-      const latestUserMessage = messages.findLast((msg) => msg.role === 'user');
+    // --- RAG Process: Always attempt to retrieve context ---
+    const latestUserMessage = messages.findLast((msg) => msg.role === 'user');
 
-      if (latestUserMessage?.content) {
-        console.log("[RAG] Attempting RAG for query:", latestUserMessage.content.substring(0, 100) + "...");
-        try {
-          const queryEmbeddingVector = await generateEmbedding(latestUserMessage.content);
-          console.log("[RAG] Query embedding generated.");
+    if (latestUserMessage?.content) {
+      // Log whether RAG was explicitly requested via uploads or we're checking anyway
+      console.log(`[RAG] Attempting RAG for query (user uploaded files: ${useUploadedFiles ? 'yes' : 'no'}):`, 
+                 latestUserMessage.content.substring(0, 100) + "...");
+      try {
+        const queryEmbeddingVector = await generateEmbedding(latestUserMessage.content);
+        console.log("[RAG] Query embedding generated.");
 
-          if (queryEmbeddingVector && queryEmbeddingVector.length > 0) { // Check embedding validity
-            console.log("[RAG] Querying Pinecone for similar chunks (no filter)..."); // Log no filter
-            // Call querySimilarChunks WITHOUT the filter argument
-            retrievedChunks = await querySimilarChunks(
-              queryEmbeddingVector,
-              3 // Retrieve top 3 chunks
-              // No filterFileName argument passed
-            );
-            console.log(`[RAG] Retrieved ${retrievedChunks.length} chunks from Pinecone.`);
+        if (queryEmbeddingVector && queryEmbeddingVector.length > 0) { // Check embedding validity
+          console.log("[RAG] Querying Pinecone for similar chunks (no filter)..."); 
+          // Call querySimilarChunks WITHOUT the filter argument
+          retrievedChunks = await querySimilarChunks(
+            queryEmbeddingVector,
+            3 // Retrieve top 3 chunks
+            // No filterFileName argument passed
+          );
+          console.log(`[RAG] Retrieved ${retrievedChunks.length} chunks from Pinecone.`);
 
-            // --- Log retrieved chunks content ---
-            if (retrievedChunks.length > 0) {
-                console.log('[RAG] Retrieved Chunks Details:', JSON.stringify(retrievedChunks, null, 2));
-            }
-            // --- End Log ---
-
-            // Format context (uses retrievedChunks)
-            if (retrievedChunks.length > 0) {
-              retrievedContextText = `--- START CONTEXT FROM UPLOADED DOCUMENTS ---\n${
-                retrievedChunks.map((chunk, idx) =>
-                  // Format each chunk clearly
-                  `[Context Chunk ${idx + 1} | Source: ${chunk.metadata.fileName} | Chunk Index: ${chunk.metadata.chunkIndex}]\n${chunk.content}`
-                ).join('\n\n---\n\n') // Separator
-              }\n--- END CONTEXT FROM UPLOADED DOCUMENTS ---`;
-              console.log('[RAG] Formatted Context Text Prepared:\n', retrievedContextText);
-            } else {
-              console.log("[RAG] No relevant chunks found in Pinecone.");
-            }
-          } else {
-            console.log("[RAG] Skipping Pinecone query due to invalid/empty embedding vector.");
+          // --- Log retrieved chunks content ---
+          if (retrievedChunks.length > 0) {
+              console.log('[RAG] Retrieved Chunks Details:', JSON.stringify(retrievedChunks, null, 2));
           }
-        } catch (ragError) {
-          console.error("[RAG] Error during RAG retrieval/embedding:", ragError);
-          // Do not add context if RAG failed
-          retrievedContextText = '';
+          // --- End Log ---
+
+          // Format context (uses retrievedChunks)
+          if (retrievedChunks.length > 0) {
+            retrievedContextText = `--- START CONTEXT FROM UPLOADED DOCUMENTS ---\n${
+              retrievedChunks.map((chunk, idx) =>
+                // Format each chunk clearly
+                `[Context Chunk ${idx + 1} | Source: ${chunk.metadata.fileName} | Chunk Index: ${chunk.metadata.chunkIndex}]\n${chunk.content}`
+              ).join('\n\n---\n\n') // Separator
+            }\n--- END CONTEXT FROM UPLOADED DOCUMENTS ---`;
+            console.log('[RAG] Formatted Context Text Prepared:\n', retrievedContextText);
+          } else {
+            console.log("[RAG] No relevant chunks found in Pinecone.");
+          }
+        } else {
+          console.log("[RAG] Skipping Pinecone query due to invalid/empty embedding vector.");
         }
-      } else {
-        console.log("[RAG] No latest user message content found for RAG query.");
+      } catch (ragError) {
+        console.error("[RAG] Error during RAG retrieval/embedding:", ragError);
+        // Do not add context if RAG failed
+        retrievedContextText = '';
       }
     } else {
-      console.log("[RAG] useUploadedFiles is false. Skipping RAG.");
+      console.log("[RAG] No latest user message content found for RAG query.");
     }
 
 

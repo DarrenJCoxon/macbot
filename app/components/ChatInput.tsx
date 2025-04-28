@@ -1,3 +1,4 @@
+// app/components/ChatInput.tsx
 'use client';
 
 import { FormEvent } from 'react';
@@ -7,6 +8,19 @@ import {
   TextInput, 
   SendButton 
 } from '@/app/styles/ChatStyles';
+import styled from 'styled-components';
+
+// Add decoration to the send button
+const StylizedSendButton = styled(SendButton)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:before {
+    content: '✒️';
+    margin-right: 0.5rem;
+  }
+`;
 
 type ChatInputProps = {
   value: string;
@@ -28,15 +42,15 @@ export default function ChatInput({
           type="text"
           value={value}
           onChange={onChange}
-          placeholder="Ask about Macbeth..."
+          placeholder="Pose thy query about Macbeth..."
           disabled={isLoading}
         />
-        <SendButton 
+        <StylizedSendButton 
           type="submit" 
           disabled={isLoading || !value.trim()}
         >
-          Send
-        </SendButton>
+          Dispatch
+        </StylizedSendButton>
       </InputContainer>
     </InputForm>
   );

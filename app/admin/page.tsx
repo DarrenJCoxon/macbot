@@ -1,54 +1,65 @@
 // app/admin/page.tsx
-'use client'; // Needed because AdminPanel and DocumentUploader likely use hooks
+'use client';
 
 import React from 'react';
-import Link from 'next/link'; // Optional: for linking back
-import AdminPanel from '@/app/components/AdminPanel'; // Adjust path if needed
-import DocumentUploader from '@/app/components/DocumentUploader'; // Adjust path if needed
-import styled from 'styled-components'; // Optional: for styling
+import Link from 'next/link';
+import DocumentUploader from '@/app/components/DocumentUploader';
+import styled from 'styled-components';
 
-// Optional basic styling for the admin page container
 const AdminPageContainer = styled.div`
   padding: 2rem;
   max-width: 900px;
   margin: 2rem auto;
-  border: 1px solid var(--gray-300);
-  border-radius: 8px;
-  background-color: var(--background); // Use theme variable
+  border: 2px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.borderRadius.medium};
+  background-color: ${props => props.theme.colors.background};
+  background-image: url('/parchment-bg.png');
+  background-size: cover;
+  box-shadow: ${props => props.theme.shadows.large};
 `;
 
 const AdminPageTitle = styled.h1`
   text-align: center;
   margin-bottom: 2rem;
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.primary};
+  font-family: ${props => props.theme.fonts.heading};
+  
+  &:before, &:after {
+    content: '❦';
+    margin: 0 1rem;
+    color: ${props => props.theme.colors.gold};
+  }
 `;
 
 const BackLink = styled(Link)`
     display: block;
     margin-bottom: 2rem;
-    color: var(--primary);
-    text-decoration: underline;
+    color: ${props => props.theme.colors.secondary};
+    text-decoration: none;
+    font-family: ${props => props.theme.fonts.heading};
+    font-style: italic;
+    
+    &:before {
+      content: '←';
+      margin-right: 0.5rem;
+    }
+    
     &:hover {
-        color: var(--primary-hover);
+        color: ${props => props.theme.colors.secondaryLight};
+        text-decoration: underline;
     }
 `;
-
 
 export default function AdminPage() {
   return (
     <AdminPageContainer>
-        <BackLink href="/">← Back to Chat</BackLink>
-      <AdminPageTitle>Admin Area</AdminPageTitle>
+        <BackLink href="/">Return to the Oracle</BackLink>
+        <AdminPageTitle>The Scribe&apos;s Chambers</AdminPageTitle>
 
-      {/* Render the Admin Panel (Seeding) */}
-      <AdminPanel />
-
-      <hr style={{ margin: '2rem 0', borderColor: 'var(--gray-200)' }} />
-
-      {/* Render the Document Uploader (Detailed Upload Form) */}
-      <DocumentUploader />
-
+        {/* Document Uploader */}
+        <DocumentUploader />
     </AdminPageContainer>
   );
 }
