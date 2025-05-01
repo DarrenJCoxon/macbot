@@ -1,7 +1,3 @@
-Okay, let's update the README to reflect the final tech stack, including the PDF/Word parsing libraries and the switch to OpenRouter for the LLM.
-
-Here is the updated README.md:
-
 # Macbot: AI Shakespeare Companion 🎭📚
 
 Macbot is an AI-powered chatbot designed to help students explore and understand Shakespeare's tragedy, Macbeth. Leveraging advanced AI technologies, Macbot provides insightful analysis, contextual understanding, and interactive learning.
