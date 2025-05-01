@@ -1,20 +1,23 @@
-// app/components/DocumentUploader.tsx
 'use client';
 
 import React, { useState, useRef, FormEvent, ChangeEvent } from 'react';
 import styled from 'styled-components';
 
-// --- Styled Components (Removed SelectedFileName) ---
+// --- Styled Components (with theme) ---
 const UploaderContainer = styled.div`
   margin-top: 24px;
   padding: 20px;
-  border: 1px solid var(--gray-300);
-  border-radius: 8px;
+  border: 1px solid ${props => props.theme?.colors?.border || '#59321f'};
+  border-radius: ${props => props.theme?.borderRadius?.medium || '8px'};
+  background-color: ${props => props.theme?.colors?.backgroundDark || '#e8dfc2'};
+  box-shadow: ${props => props.theme?.shadows?.medium || '0 4px 8px rgba(0, 0, 0, 0.2)'};
 `;
 
 const UploaderTitle = styled.h3`
   margin-bottom: 16px;
-  color: var(--gray-800);
+  color: ${props => props.theme?.colors?.primary || '#3a1e1c'};
+  font-family: ${props => props.theme?.fonts?.heading || 'inherit'};
+  font-size: 1.3rem;
 `;
 
 const UploadForm = styled.form`
@@ -31,15 +34,19 @@ const FileInputContainer = styled.div`
 
 const FileInputLabel = styled.label`
   padding: 12px;
-  background-color: var(--gray-100);
-  border: 1px dashed var(--gray-300);
-  border-radius: 8px;
+  background-color: ${props => props.theme?.colors?.background || '#f8f4e9'};
+  border: 1px dashed ${props => props.theme?.colors?.border || '#59321f'};
+  border-radius: ${props => props.theme?.borderRadius?.medium || '8px'};
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.2s;
-
+  transition: all 0.2s ease;
+  font-family: ${props => props.theme?.fonts?.body || 'inherit'};
+  color: ${props => props.theme?.colors?.text || '#2d2416'};
+  
   &:hover {
-    background-color: var(--gray-200);
+    background-color: ${props => props.theme?.colors?.gold || '#c4a747'};
+    color: ${props => props.theme?.colors?.primaryDark || '#2a1615'};
+    border-color: ${props => props.theme?.colors?.primary || '#3a1e1c'};
   }
 `;
 
@@ -56,36 +63,59 @@ const MetadataContainer = styled.div`
 const InputLabel = styled.label`
   font-size: 14px;
   font-weight: 500;
-  color: var(--gray-800);
+  color: ${props => props.theme?.colors?.primary || '#3a1e1c'};
+  font-family: ${props => props.theme?.fonts?.heading || 'inherit'};
 `;
 
 const TextInput = styled.input`
   padding: 8px 12px;
-  border: 1px solid var(--gray-300);
-  border-radius: 8px;
+  border: 1px solid ${props => props.theme?.colors?.border || '#59321f'};
+  border-radius: ${props => props.theme?.borderRadius?.small || '4px'};
   font-size: 14px;
-
+  background-color: ${props => props.theme?.colors?.background || '#f8f4e9'};
+  color: ${props => props.theme?.colors?.text || '#2d2416'};
+  font-family: ${props => props.theme?.fonts?.body || 'inherit'};
+  
   &:focus {
-    border-color: var(--primary);
+    border-color: ${props => props.theme?.colors?.secondary || '#473080'};
     outline: none;
+    box-shadow: 0 0 0 2px rgba(71, 48, 128, 0.2);
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme?.colors?.textLight || '#59463a'};
+    font-style: italic;
   }
 `;
 
 const UploadButton = styled.button`
-  background-color: var(--primary);
+  background-color: ${props => props.theme?.colors?.secondary || '#473080'};
   color: white;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid ${props => props.theme?.colors?.secondaryDark || '#2b1d4e'};
+  border-radius: ${props => props.theme?.borderRadius?.medium || '8px'};
   padding: 10px 16px;
   font-size: 14px;
   font-weight: 500;
+  font-family: ${props => props.theme?.fonts?.heading || 'inherit'};
   cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-hover);
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.theme?.shadows?.small || '0 2px 4px rgba(0, 0, 0, 0.1)'};
+  
+  &:before {
+    content: '📜';
+    margin-right: 0.5rem;
   }
-
+  
+  &:hover:not(:disabled) {
+    background-color: ${props => props.theme?.colors?.secondaryLight || '#6a52a2'};
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme?.shadows?.medium || '0 4px 8px rgba(0, 0, 0, 0.2)'};
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -95,24 +125,25 @@ const UploadButton = styled.button`
 const StatusMessage = styled.p<{ $isError?: boolean }>`
   margin-top: 12px;
   padding: 8px 12px;
-  background-color: ${props => props.$isError ? '#fee2e2' : '#ecfdf5'};
-  color: ${props => props.$isError ? '#b91c1c' : '#047857'};
-  border-radius: 6px;
-  font-size: 14px;
+  background-color: ${props => props.$isError 
+    ? 'rgba(145, 31, 28, 0.1)' // Light red background based on theme.colors.error
+    : 'rgba(42, 76, 52, 0.1)'}; // Light green background based on theme.colors.success
+  color: ${props => props.$isError 
+    ? props.theme?.colors?.error || '#911f1c' 
+    : props.theme?.colors?.success || '#2a4c34'};
+  border-radius: ${props => props.theme?.borderRadius?.small || '4px'};
+  border-left: 3px solid ${props => props.$isError 
+    ? props.theme?.colors?.error || '#911f1c' 
+    : props.theme?.colors?.success || '#2a4c34'};
+  font-family: ${props => props.theme?.fonts?.body || 'inherit'};
+  font-style: italic;
 `;
 
-// REMOVED: const SelectedFileName = styled.div` ... `
-
-// --- End Styled Components ---
-
-
 // --- Component Logic ---
-
-// Interface for the metadata collected by this form
 interface DocumentMetadataForm {
   title: string;
   source: string;
-  type: string; // e.g., 'notes', 'essay', 'guide'
+  type: string;
 }
 
 export default function DocumentUploader() {
@@ -218,17 +249,16 @@ export default function DocumentUploader() {
       <UploadForm onSubmit={handleSubmit}>
         <FileInputContainer>
           <FileInputLabel htmlFor="admin-document-upload">
-            {file ? `Selected: ${file.name}` : 'Click to select document (.txt, .md etc.)'}
+            {file ? `Selected: ${file.name}` : 'Click to select document (.txt, .pdf, .docx, .md)'}
           </FileInputLabel>
           <HiddenFileInput
             id="admin-document-upload"
             type="file"
-            accept=".txt,.md" // Adjust accepted types as needed
+            accept=".txt,.md,.pdf,.docx,.doc" // Updated to accept PDF and Word docs
             onChange={handleFileChange}
             ref={fileInputRef}
             disabled={isUploading}
           />
-          {/* REMOVED: {file && <SelectedFileName>{file.name}</SelectedFileName>} */}
         </FileInputContainer>
 
         <MetadataContainer>
@@ -257,7 +287,7 @@ export default function DocumentUploader() {
         </MetadataContainer>
 
         <UploadButton type="submit" disabled={isUploading || !file}>
-          {isUploading ? 'Uploading...' : 'Upload Document'}
+          {isUploading ? 'Transcribing...' : 'Upload Document'}
         </UploadButton>
 
         {status && (

@@ -1,8 +1,9 @@
-// app/layout.tsx
-import { type Metadata } from 'next';
+// app/layout.tsx - Updated with proper styled-components setup
 import { Inter } from 'next/font/google';
-import ThemeProvider from './components/ThemeProvider';
+import type { Metadata } from 'next';
 import './globals.css';
+import StyledComponentsRegistry from './lib/registry';
+import ThemeProvider from './components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <StyledComponentsRegistry>
+          <ThemeProvider>{children}</ThemeProvider>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

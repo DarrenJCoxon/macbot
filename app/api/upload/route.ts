@@ -1,9 +1,5 @@
 // app/api/upload/route.ts
 import { NextResponse } from 'next/server';
-// Removed writeFile, join, fs imports as they are no longer needed for file writing/cleanup
-// import { writeFile } from 'fs/promises';
-// import { join } from 'path';
-// import * as fs from 'fs';
 import * as path from 'path'; // Keep for extname
 import { nanoid } from 'nanoid';
 
@@ -11,10 +7,6 @@ import { nanoid } from 'nanoid';
 import { generateEmbeddings } from '@/app/lib/embeddings';
 import { insertVectors } from '@/app/lib/pinecone-client';
 import { FileChunk } from '@/app/types';
-
-// Removed uploadsDir and related checks as we are not writing files
-// const uploadsDir = path.join(process.cwd(), 'uploads');
-// try { ... } catch ...
 
 export async function POST(req: Request) {
   console.log('--- /api/upload endpoint hit ---');
@@ -57,36 +49,48 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(arrayBuffer);
       console.log(`Buffer read successfully (size: ${buffer.length})`);
 
-      // --- REMOVED File Writing Logic ---
-      // No longer writing file to disk
-      // const tempFilePath = join(uploadsDir, `${fileId}-${originalFileName}`);
-      // await writeFile(tempFilePath, buffer);
-      // --- END REMOVED File Writing Logic ---
-
-
       // --- Extract Text (using the buffer directly) ---
       let fileContent = '';
       const fileExt = path.extname(originalFileName).toLowerCase();
       console.log(`Extracting content for type: ${fileExt}`);
 
-      if (fileExt === '.txt' || fileExt === '.md') {
-        fileContent = buffer.toString('utf-8');
-      } else if (fileExt === '.pdf') {
-        // TODO: Integrate pdf-parse library, passing the 'buffer'
-        // e.g., import pdf from 'pdf-parse'; const data = await pdf(buffer); fileContent = data.text;
-        console.warn("PDF parsing not implemented. Using placeholder content.");
-        fileContent = `Placeholder content for PDF: ${originalFileName}`;
-      } else if (fileExt === '.docx') {
-        // TODO: Integrate mammoth library, passing the 'buffer' object
-        // e.g., import mammoth from 'mammoth'; const { value } = await mammoth.extractRawText({ buffer }); fileContent = value;
-        console.warn("DOCX parsing not implemented. Using placeholder content.");
-        fileContent = `Placeholder content for DOCX: ${originalFileName}`;
-      } else {
+      try {
+        if (fileExt === '.txt' || fileExt === '.md') {
+          fileContent = buffer.toString('utf-8');
+        } else if (fileExt === '.pdf') {
+          // Parse PDF using pdf-parse with proper typing
+          try {
+            const pdfParseModule = await import('pdf-parse');
+            const pdfParse: (buffer: Buffer, options?: object) => Promise<{ text: string }> = pdfParseModule.default;
+            const pdfData = await pdfParse(buffer, {});
+            fileContent = pdfData.text;
+            console.log(`Extracted ${fileContent.length} characters from PDF`);
+          } catch (error) {
+            console.error('PDF parsing error:', error);
+            throw new Error(`Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        } else if (fileExt === '.docx' || fileExt === '.doc') {
+          // Parse DOCX using mammoth
+          try {
+            const mammoth = await import('mammoth');
+            const result = await mammoth.extractRawText({ buffer });
+            fileContent = result.value;
+            console.log(`Extracted ${fileContent.length} characters from Word document`);
+          } catch (error) {
+            console.error('DOCX parsing error:', error);
+            throw new Error(`Failed to parse Word document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        } else {
           console.warn(`Unsupported file type '${fileExt}' for content extraction. Skipping content processing for ${originalFileName}.`);
           continue; // Skip this file if type is unsupported
+        }
+      } catch (error) {
+        console.error(`Error parsing file ${originalFileName}:`, error);
+        // Continue with next file on error
+        continue;
       }
-      console.log(`Content extracted/placeholder generated (length: ${fileContent?.length || 0})`);
-
+      
+      console.log(`Content extracted (length: ${fileContent?.length || 0})`);
 
       // --- Split into Chunks ---
       if (!fileContent) {
@@ -131,11 +135,6 @@ export async function POST(req: Request) {
       } else {
           console.warn(`No vectors generated for ${originalFileName}.`);
       }
-
-      // --- REMOVED File Cleanup Logic ---
-      // No temporary file was created, so no cleanup needed
-      // --- END REMOVED File Cleanup Logic ---
-
     } // End of loop through files
 
     console.log('--- /api/upload processing successful ---');
@@ -145,7 +144,7 @@ export async function POST(req: Request) {
       processedFiles: processedFilesInfo,
     });
 
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('--- ERROR in /api/upload ---:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
     return NextResponse.json(

@@ -147,7 +147,7 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
     <UploadContainer>
       {/* The label text is updated, but ID remains the same */}
       <UploadButton htmlFor="file-upload">
-        Consult Ancient Texts
+        Consult Ancient Texts (.txt, .pdf, .docx)
       </UploadButton>
 
       {/* Keep all properties the same */}
@@ -155,7 +155,7 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
         id="file-upload"
         type="file"
         multiple
-        accept=".pdf,.txt,.docx,.md"
+        accept=".pdf,.txt,.docx,.doc,.md"
         onChange={handleFileChange}
       />
 

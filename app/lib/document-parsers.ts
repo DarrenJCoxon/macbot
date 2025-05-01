@@ -1,6 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 
 /**
  * Write file to temporary directory
@@ -60,6 +62,34 @@ export async function parseTextFile(filePath: string): Promise<string> {
 }
 
 /**
+ * Parse PDF file
+ */
+export async function parsePdfFile(filePath: string): Promise<string> {
+  try {
+    const dataBuffer = await fs.readFile(filePath);
+    const pdfData = await pdfParse(dataBuffer);
+    return pdfData.text;
+  } catch (error) {
+    console.error('Error parsing PDF file:', error);
+    throw new Error('Failed to parse PDF file');
+  }
+}
+
+/**
+ * Parse DOCX file
+ */
+export async function parseDocxFile(filePath: string): Promise<string> {
+  try {
+    const buffer = await fs.readFile(filePath);
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value;
+  } catch (error) {
+    console.error('Error parsing DOCX file:', error);
+    throw new Error('Failed to parse DOCX file');
+  }
+}
+
+/**
  * Detect file type from extension and parse accordingly
  */
 export async function parseFile(
@@ -74,11 +104,13 @@ export async function parseFile(
   
   try {
     // Process based on file type
-    if (ext === '.txt') {
+    if (ext === '.txt' || ext === '.md') {
       return await parseTextFile(filePath);
+    } else if (ext === '.pdf') {
+      return await parsePdfFile(filePath);
+    } else if (ext === '.docx' || ext === '.doc') {
+      return await parseDocxFile(filePath);
     } else {
-      // For now, only support .txt
-      // In a full implementation, add support for .pdf, .docx, etc.
       throw new Error(`Unsupported file type: ${ext}`);
     }
   } finally {
